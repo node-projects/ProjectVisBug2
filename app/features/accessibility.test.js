@@ -1,5 +1,5 @@
 import test from 'ava'
-import { setupPptrTab, teardownPptrTab, getActiveTool, changeMode } from '../../tests/helpers'
+import { setupPptrTab, teardownPptrTab, getActiveTool, changeMode } from '../../tests/helpers.js'
 
 test.beforeEach(setupPptrTab)
 
@@ -59,4 +59,4 @@ test('Gets fill or stroke value first if the target is one of svg elements', asy
   t.pass()
 })
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

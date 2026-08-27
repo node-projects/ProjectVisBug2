@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab, changeMode, getActiveTool, pptrMetaKey }
-from '../../tests/helpers'
+from '../../tests/helpers.js'
 
 const tool            = 'font'
 const test_selector   = '[intro] b'
@@ -118,14 +118,14 @@ test('Can change weight', async t => {
   await page.keyboard.down(metaKey)
   await page.keyboard.press('ArrowUp')
   await page.keyboard.up(metaKey)
-  t.is(await getInlineStyle(page, 'font-weight'), '800')
+  t.is(await getInlineStyle(page, 'font-weight'), '500')
 
   await page.keyboard.down(metaKey)
   await page.keyboard.press('ArrowDown')
   await page.keyboard.up(metaKey)
-  t.is(await getInlineStyle(page, 'font-weight'), '700')
+  t.is(await getInlineStyle(page, 'font-weight'), '400')
 
   t.pass()
 })
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

@@ -1,12 +1,12 @@
-import resolve  from 'rollup-plugin-node-resolve'
+import {nodeResolve as resolve} from '@rollup/plugin-node-resolve'
 import postcss  from 'rollup-plugin-postcss'
-import {terser} from 'rollup-plugin-terser'
+import terser from '@rollup/plugin-terser'
 
 const is_prod = process.env.build === 'prod'
 
 const dev_plugins = [
   resolve({
-    jsnext: true,
+    browser: true,
   }),
   postcss({
     extract: false,

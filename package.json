@@ -4,6 +4,7 @@
   "description": "",
   "author": "Adam Argyle",
   "license": "Apache-2.0",
+  "type": "module",
   "main": "app/components/vis-bug/vis-bug.element.js",
   "repository": {
     "type": "git",
@@ -38,37 +39,38 @@
     "test:ci": "start-server-and-test http://localhost:3000"
   },
   "dependencies": {
-    "@ctrl/tinycolor": "^3.0.2",
+    "@ctrl/tinycolor": "^4.2.0",
     "blingblingjs": "^2.3.0",
-    "colorjs.io": "^0.5.0",
-    "construct-style-sheets-polyfill": "^2.4.2",
+    "colorjs.io": "^0.7.1",
+    "construct-style-sheets-polyfill": "^3.1.0",
     "get-box-quads-polyfill": "^4.47.0",
-    "hotkeys-js": "^3.13.7",
+    "hotkeys-js": "^4.0.5",
     "query-selector-shadow-dom": "^1.0.1"
   },
   "devDependencies": {
-    "ava": "1.4.1",
-    "browser-sync": "^2.26.13",
-    "concurrently": "^5.1.0",
-    "esm": "^3.2.22",
-    "open-props": "^1.6.21",
-    "postcss": "^7.0.27",
-    "postcss-cli": "^7.1.0",
-    "postcss-import": "^12.0.1",
-    "postcss-loader": "^3.0.0",
-    "postcss-preset-env": "^6.7.0",
-    "puppeteer": "^10.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^1.0.0",
+    "ava": "^8.0.1",
+    "browser-sync": "^3.0.4",
+    "concurrently": "^10.0.5",
+    "open-props": "^1.7.23",
+    "postcss": "^8.5.26",
+    "postcss-cli": "^11.0.1",
+    "postcss-import": "^17.0.0",
+    "postcss-loader": "^8.2.1",
+    "postcss-preset-env": "^11.5.0",
+    "puppeteer": "^25.9.0",
     "ragrid": "^1.0.6",
-    "rollup": "^2.0.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-postcss": "^3.1.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "start-server-and-test": "^1.11.0",
-    "web-ext": "^7.11.0"
+    "rollup": "^4.63.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "start-server-and-test": "^3.0.12",
+    "web-ext": "^10.6.0"
   },
   "ava": {
-    "require": [
-      "esm"
-    ]
+    "files": [
+      "app/**/*.test.js"
+    ],
+    "serial": true,
+    "timeout": "1m"
   }
 }

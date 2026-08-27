@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab, changeMode, getActiveTool } 
-from '../../tests/helpers'
+from '../../tests/helpers.js'
 
 const tool            = 'move'
 const test_selector   = '[intro] b'
@@ -86,4 +86,4 @@ test('Drag bounds are highlighted', async t => {
   t.pass()
 })
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

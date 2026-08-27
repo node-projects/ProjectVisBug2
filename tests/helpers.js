@@ -14,6 +14,7 @@ export const setupPptrTab = async t => {
 
 export const teardownPptrTab = async ({context:{ page, browser }}) => {
   await page.close()
+  await browser.close()
 }
 
 export const changeMode = async ({page, tool}) =>

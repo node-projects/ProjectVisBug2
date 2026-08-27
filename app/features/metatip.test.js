@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab, changeMode, getActiveTool }
-from '../../tests/helpers'
+from '../../tests/helpers.js'
 
 const tool            = 'inspector'
 const test_selector   = '[intro] b'
@@ -53,4 +53,4 @@ test('Should show tag name in header', async t => {
   t.pass()
 })
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

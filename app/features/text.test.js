@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab, changeMode, getActiveTool }
-from '../../tests/helpers'
+from '../../tests/helpers.js'
 
 const tool            = 'text'
 const test_selector   = '[intro] b'
@@ -53,4 +53,4 @@ test('Can delete text content', async t => {
 })
 
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

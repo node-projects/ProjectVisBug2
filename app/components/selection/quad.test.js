@@ -1,5 +1,5 @@
 import test from 'ava'
-import { getBoxQuad, quadBounds, quadPath, sideMidpoint } from './quad'
+import { getBoxQuad, quadBounds, quadPath, sideMidpoint } from './quad.js'
 
 const quad = {
   p1: {x: 10, y: 20},

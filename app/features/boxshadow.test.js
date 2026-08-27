@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab, changeMode, getActiveTool, pptrMetaKey }
-from '../../tests/helpers'
+from '../../tests/helpers.js'
 
 const tool            = 'boxshadow'
 const test_selector   = '[intro] b'
@@ -114,4 +114,4 @@ test('Shadow can be set to inset', async t => {
 })
 
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

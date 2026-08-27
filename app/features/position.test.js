@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab, changeMode, getActiveTool }
-from '../../tests/helpers'
+from '../../tests/helpers.js'
 
 const tool            = 'position'
 const test_selector   = '[intro] h1'
@@ -95,4 +95,4 @@ test('Test Drag Works', async t => {
 
 
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

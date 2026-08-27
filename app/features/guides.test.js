@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab } 
-from '../../tests/helpers'
+from '../../tests/helpers.js'
 
 test.beforeEach(setupPptrTab)
 
@@ -16,4 +16,4 @@ test('Should show 1 overlay element on hover', async t => {
   t.pass()
 })
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)

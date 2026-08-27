@@ -1,7 +1,7 @@
 import test from 'ava'
 
 import { setupPptrTab, teardownPptrTab, getActiveTool, pptrMetaKey }
-from '../../../tests/helpers'
+from '../../../tests/helpers.js'
 
 test.beforeEach(setupPptrTab)
 
@@ -107,4 +107,4 @@ test('Should throw on invalid execCommand', async t => {
   t.pass()
 })
 
-test.afterEach(teardownPptrTab)
+test.afterEach.always(teardownPptrTab)
