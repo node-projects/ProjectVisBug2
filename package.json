@@ -1,14 +1,18 @@
 {
-  "name": "VisBug",
+  "name": "visbug2",
   "version": "0.4.9",
-  "description": "",
+  "description": "Community-maintained fork of VisBug, the open source browser design tools",
   "author": "Adam Argyle",
   "license": "Apache-2.0",
   "type": "module",
   "main": "app/components/vis-bug/vis-bug.element.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GoogleChromeLabs/ProjectVisBug.git"
+    "url": "git+https://github.com/node-projects/ProjectVisBug2.git"
+  },
+  "homepage": "https://node-projects.github.io/ProjectVisBug2/",
+  "bugs": {
+    "url": "https://github.com/node-projects/ProjectVisBug2/issues"
   },
   "scripts": {
     "start": "npm run concurrent",
@@ -22,17 +26,16 @@
     "dev:server": "browser-sync start --server \"app\" --files \"app/index.html,app/bundle.css,app/bundle.js\" --no-open --no-notify --no-ui --no-ghost-mode",
     "dev:extension": "npm run extension:build && npm run extension:local:version",
     "extension": "npm run extension:js && npm run extension:css && npm run extension:copy && npm run extension:local:version",
-    "extension:local:version": "sed -i '' \"s/{{NPM_VERSION}}/0.0.0/\" ./extension/manifest.json && sed -i '' \"s/VisBug/DevBug/\" ./extension/manifest.json && sed -i '' \"s/visbug.png/visbug-dev.png/\" ./extension/manifest.json",
+    "extension:local:version": "sed -i '' \"s/{{NPM_VERSION}}/0.0.0/\" ./extension/manifest.json && sed -i '' \"s/VisBug2/DevBug2/\" ./extension/manifest.json && sed -i '' \"s/visbug.png/visbug-dev.png/\" ./extension/manifest.json",
     "extension:ci:version": "sed -i \"s/{{NPM_VERSION}}/$npm_package_version/\" ./extension/manifest.json",
     "extension:build": "npm run extension:js && npm run extension:css && npm run extension:copy",
     "extension:release": "npm run test:ci && npm run bump && npm run extension:build && npm run extension:zip",
     "extension:js": "npm run bundle:prod",
     "extension:css": "postcss app/extension.css -o extension/toolbar/bundle.css",
     "extension:copy": "cp app/bundle.min.js extension/toolbar/ && cp -R app/tuts/ extension/tuts",
-    "extension:zip": "rm -rf ./extension/build/* && mkdir ./visbug_v$npm_package_version && cp -R ./extension/* ./visbug_v$npm_package_version/ && zip -r ./extension/build/visbug.zip ./visbug_v$npm_package_version/ && rm -rf ./visbug_v$npm_package_version",
+    "extension:zip": "rm -rf ./extension/build/* && mkdir ./visbug2_v$npm_package_version && cp -R ./extension/* ./visbug2_v$npm_package_version/ && zip -r ./extension/build/visbug2.zip ./visbug2_v$npm_package_version/ && rm -rf ./visbug2_v$npm_package_version",
     "extension:firefox": "npm run dev:extension && cd extension && web-ext run",
     "extension:firefox-build": "npm run extension:build && cd extension && web-ext build",
-    "deploy": "gcloud app deploy --project=visbug-1337",
     "test": "ava",
     "test:dev": "ava -v -w",
     "test:server": "browser-sync start --server \"app\" --files \"app/index.html,app/bundle.css,app/bundle.js\" --no-open --no-notify --no-ui --no-ghost-mode",

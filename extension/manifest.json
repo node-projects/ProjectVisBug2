@@ -1,5 +1,5 @@
 {
-  "name": "DevBug",
+  "name": "VisBug2",
   "version": "0.4.9",
   "description": "Open source browser design tools",
   "manifest_version": 3,
@@ -15,7 +15,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Click or press Alt+Shift+D to launch VisBug",
+    "default_title": "Click or press Alt+Shift+D to launch VisBug2",
     "default_icon": {
       "128": "icons/visbug.png"
     }

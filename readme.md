@@ -1,104 +1,101 @@
 <p align="center">
-  <img src="./assets/visbug.png" width="300" height="300" alt="visbug">
-  <br>
-  <a href="https://travis-ci.org/GoogleChromeLabs/ProjectVisBug"><img src="https://travis-ci.org/GoogleChromeLabs/ProjectVisBug.svg?branch=master" alt="travis build status"></a>
-  <a href="https://chrome.google.com/webstore/detail/visbug/cdockenadnadldjbbgcallicgledbeoc?hl=en"><img src="https://badgen.net/chrome-web-store/users/cdockenadnadldjbbgcallicgledbeoc"></a>
-  <a href="https://chrome.google.com/webstore/detail/visbug/cdockenadnadldjbbgcallicgledbeoc?hl=en"><img src="https://badgen.net/chrome-web-store/stars/cdockenadnadldjbbgcallicgledbeoc"></a>
+  <img src="./assets/visbug.png" width="300" height="300" alt="VisBug2">
 </p>
 
-# 「VisBug」
+# VisBug2
 
-> Open source web design debug tools
+> Open source browser design and debugging tools
 
-- Point, click & tinker
-- Hold shift and **multi-select**
-- Edit **any page** in **any state**
-- **Hover inspect** styles, accessibility and alignment
-- **Nitpick** layouts & content, **in the real end environment**, at any device size
-- **Leverage** design tool nudging skills
-- **Edit** any text
-- **Replace** image(s)
-- Traverse DOM like groups & layers in Sketch
-- Design **within the chaos** of production or prototypes and the **odd states** they produce
-- Bugs become **design opportunities**
-- Design **while simulating:** latency, translation, media queries, platform constraints, orientation, screensize, etc
-- **Make more decisions** on the front end of your site/app (a11y, responsive, edge cases, etc)
+[![CI](https://github.com/node-projects/ProjectVisBug2/actions/workflows/test.yml/badge.svg)](https://github.com/node-projects/ProjectVisBug2/actions/workflows/test.yml)
+[![Deploy demo](https://github.com/node-projects/ProjectVisBug2/actions/workflows/pages.yml/badge.svg)](https://github.com/node-projects/ProjectVisBug2/actions/workflows/pages.yml)
 
+**[Try the VisBug2 demo](https://node-projects.github.io/ProjectVisBug2/)**
 
-**No waiting** for developers to expose their legos, **just go direct** and edit the end state (regardless of framework) and **execute/test an idea**
+VisBug2 is a community-maintained fork of the original
+[VisBug project](https://github.com/GoogleChromeLabs/ProjectVisBug). Our sincere
+thanks go to [Adam Argyle](https://argyleink.com), VisBug's creator and original
+author, and to everyone who contributed to the upstream project. VisBug2 keeps
+that work available and maintained while the original hosted demo is offline.
 
-<br>
-<br>
-<br>
+## What it does
 
-<h3 style="font-weight:300; max-width: 40ch;"><b>Give power</b> to designers & content creators power within the web project they have today, <b>by bringing design tool interactions</b> to the browser.</h3>
+- Point, click, and tinker with any web page
+- Hold Shift to multi-select elements
+- Inspect styles, accessibility, and alignment on hover
+- Nudge layouts with familiar design-tool keyboard controls
+- Edit text and replace images
+- Traverse the DOM like groups and layers in a design tool
+- Explore responsive layouts and unusual application states in their real environment
 
-<br>
-<br>
-<br>
+VisBug2 complements design tools such as Figma and Sketch. It is intended for
+editing and testing an existing browser state, rather than authoring a design
+from scratch.
 
-Check out the [list of features me and other's are wishing for](https://github.com/GoogleChromeLabs/ProjectVisBug/issues?q=is%3Aopen+is%3Aissue+label%3A%22%E2%9A%A1%EF%B8%8F+feature%22). There's a lot of fun stuff planned or in demand. Cast your vote on a feature, leave some feedback or add clarity. 
+## Demo
 
-Let's do this **design community, I'm looking at you!** Make a GitHub account and start dreamin' in the [issues area!](https://github.com/GoogleChromeLabs/ProjectVisBug/issues) **Help create the tool you need to do your job better.**
+The interactive playground is hosted on GitHub Pages:
 
+**https://node-projects.github.io/ProjectVisBug2/**
 
-## 🤔 **It's not:**
--   **A competitor** to design authoring tools like Figma, Sketch, XD, etc; **it's a complement!**
--   Something you would use **to start from scratch**
--   A **design system recognizer**, enforcer, enabler, etc.. but it is a **design system leverager!**
--   An **interaction** prototyping tool, you need to produce the states for VisBug to design against
-
-<br>
-<br>
-<br>
+It is rebuilt and deployed automatically from the `main` branch by
+[the Pages workflow](.github/workflows/pages.yml).
 
 ## Installation
 
-### Add to your browser
-[Chrome Extension](https://chrome.google.com/webstore/detail/cdockenadnadldjbbgcallicgledbeoc)  
-[Firefox Add-on](https://addons.mozilla.org/en-US/firefox/addon/visbug/)  
-[Safari Extension](https://apps.apple.com/app/id1538509686)  
-[Edge Extension](https://microsoftedge.microsoft.com/addons/detail/visbug/kdmdoinnkaeognnpegpkepdnggeaodkn)  
+### Develop locally
 
-### Getting Started
-[Check the Wiki](https://github.com/GoogleChromeLabs/ProjectVisBug/wiki)  
-[Master List of Keyboard Commands](https://github.com/GoogleChromeLabs/ProjectVisBug/wiki/Keyboard-Master-List)  
-[Open Feature Requests](https://github.com/GoogleChromeLabs/ProjectVisBug/issues?q=is%3Aopen+is%3Aissue+label%3A%22%E2%9A%A1%EF%B8%8F+feature%22)  
-[Chat on Gitter](https://gitter.im/VisBug)  
-[Chat on Spectrum](https://spectrum.chat/visbug)  
-[Load VisBug from a CDN](https://codepen.io/argyleink/pen/rNrQrpO)  
-
-### Web Component (coming soon 💀🤘)
 ```sh
-npm i visbug
+git clone https://github.com/node-projects/ProjectVisBug2.git
+cd ProjectVisBug2
+npm install
+npm start
 ```
 
+Then open <http://localhost:3000>.
 
+### Build
 
+```sh
+npm run bundle
+```
 
-## Contribute
+The static demo is generated in `app/`.
 
-First off, thanks for taking the time to contribute!
-Now, take a moment to be sure your contributions make sense to everyone else.
-Questions or need help building a feature, come [chat on Gitter](https://gitter.im/VisBug) or [Spectrum](https://spectrum.chat/visbug)!
+### Browser extensions
 
-### Reporting Issues
+VisBug2 retains the browser-extension sources from upstream. The currently
+published store listings belong to the original VisBug project:
 
-Found a problem? Want a new feature? First of all see if your issue or idea has [already been reported](../../issues).
-If it hasn't, just open a [new clear and descriptive issue](../../issues/new).
+- [Chrome extension](https://chrome.google.com/webstore/detail/cdockenadnadldjbbgcallicgledbeoc)
+- [Firefox add-on](https://addons.mozilla.org/en-US/firefox/addon/visbug/)
+- [Safari extension](https://apps.apple.com/app/id1538509686)
+- [Edge extension](https://microsoftedge.microsoft.com/addons/detail/visbug/kdmdoinnkaeognnpegpkepdnggeaodkn)
 
-### Submitting pull requests
+The original project's [wiki](https://github.com/GoogleChromeLabs/ProjectVisBug/wiki)
+and [keyboard command reference](https://github.com/GoogleChromeLabs/ProjectVisBug/wiki/Keyboard-Master-List)
+remain useful background documentation.
 
--   Fork it!
--   Clone your fork: `git clone https://github.com/<your-username>/ProjectVisBug`
--   Navigate to the newly cloned directory: `cd ProjectVisBug`
--   Create a new branch for the new feature: `git checkout -b my-new-feature`
--   Install the packages for development: `npm i`
--   Make your changes
--   Commit your changes: `git commit -am 'Added some feature'`
--   Push the branch: `git push origin my-new-feature`
--   Submit a pull request with full remarks documenting your changes through the GitHub UI
+## Contributing
 
-## License
+Issues and pull requests are welcome in the
+[VisBug2 repository](https://github.com/node-projects/ProjectVisBug2).
 
-[Apache2 License](LICENSE) © [Adam Argyle](https://argyleink.com)
+1. Fork the repository.
+2. Create a feature branch.
+3. Install dependencies with `npm install`.
+4. Make and test your changes.
+5. Open a pull request with a clear description of the change.
+
+Please report VisBug2 problems in the
+[VisBug2 issue tracker](https://github.com/node-projects/ProjectVisBug2/issues).
+Use the [upstream issue tracker](https://github.com/GoogleChromeLabs/ProjectVisBug/issues)
+only for matters specific to the original project.
+
+## License and attribution
+
+VisBug2 remains available under the [Apache License 2.0](LICENSE).
+
+The original VisBug project is © [Adam Argyle](https://argyleink.com) and its
+contributors. VisBug2 is derived from
+[GoogleChromeLabs/ProjectVisBug](https://github.com/GoogleChromeLabs/ProjectVisBug)
+with gratitude to its author and community.
