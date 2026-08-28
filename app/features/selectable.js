@@ -21,6 +21,7 @@ import {
   isSelectorValid, findNearestChildElement, findNearestParentElement,
   getTextShadowValues, isFixed, onRemove
 } from '../utilities/'
+import { getBoxQuad, quadBounds } from '../components/selection/quad'
 
 export function Selectable(visbug, history) {
   const page              = document.body
@@ -549,32 +550,57 @@ export function Selectable(visbug, history) {
     }
   }
 
-  const select = el => {
-    const id = handles.length
-    const tool = visbug.activeTool
+  const select = elements => {
+    const targets = elements?.nodeType === Node.ELEMENT_NODE
+      ? [elements]
+      : Array.from(elements || [])
 
-    el.setAttribute('data-selected', true)
-    el.setAttribute('data-label-id', id)
+    if (!targets.length) return
+
+    const tool = visbug.activeTool
+    const geometry = targets.map(el => {
+      const quad = getBoxQuad(el)
+      return {
+        boundingRect: quadBounds(quad),
+        el,
+        fixed: isFixed(el),
+        quad,
+      }
+    })
+    const gui = document.createDocumentFragment()
 
     clearHover()
 
-    overlayMetaUI({
-      el,
-      id,
-      no_label: 
-           tool === 'inspector' 
-        || tool === 'guides' 
-        || tool === 'margin' 
-        || tool === 'move' 
-        || tool === 'accessibility',
+    geometry.forEach(({boundingRect, el, fixed, quad}) => {
+      const id = handles.length
+
+      el.setAttribute('data-selected', true)
+      el.setAttribute('data-label-id', id)
+
+      overlayMetaUI({
+        boundingRect,
+        el,
+        fixed,
+        id,
+        no_label:
+             tool === 'inspector'
+          || tool === 'guides'
+          || tool === 'margin'
+          || tool === 'move'
+          || tool === 'accessibility',
+        quad,
+      }).forEach(node => gui.append(node))
+
+      selected.unshift(el)
     })
+
+    document.body.append(gui)
 
     $('visbug-metatip, visbug-ally').forEach(tip => {
       tip.hidePopover && tip.hidePopover()
       if (tip.isConnected && tip.showPopover) tip.showPopover()
     })
 
-    selected.unshift(el)
     tellWatchers()
   }
 
@@ -635,7 +661,7 @@ export function Selectable(visbug, history) {
   const expandSelection = ({query, all = false}) => {
     if (all) {
       const unselecteds = $(query + ':not([data-selected])')
-      unselecteds.forEach(select)
+      select(unselecteds)
     }
     else {
       const potentials = $(query)
@@ -687,13 +713,22 @@ export function Selectable(visbug, history) {
     hover_state.label   = null
   }
 
-  const overlayMetaUI = ({el, id, no_label = true}) => {
-    let handle = createHandle({el, id})
-    let rotation = createRotation({el, id})
-    let label  = no_label
+  const overlayMetaUI = ({
+    boundingRect,
+    el,
+    fixed,
+    id,
+    no_label = true,
+    quad,
+  }) => {
+    const handle = createHandle({el, fixed, id, quad})
+    const rotation = createRotation({el, id, quad})
+    const label = no_label
       ? null
       : createLabel({
+          boundingRect,
           el,
+          fixed,
           id,
           template: handleLabelText(el, visbug.activeTool)
         })
@@ -712,6 +747,8 @@ export function Selectable(visbug, history) {
       observer.disconnect()
       parentObserver.disconnect()
     })
+
+    return [handle, rotation, label].filter(Boolean)
   }
 
   const setLabel = (el, label) => {
@@ -724,18 +761,22 @@ export function Selectable(visbug, history) {
     })
   }
 
-  const createLabel = ({el, id, template}) => {
+  const createLabel = ({
+    boundingRect = el.getBoundingClientRect(),
+    el,
+    fixed = isFixed(el),
+    id,
+    template,
+  }) => {
     if (!labels[id]) {
       const label = document.createElement('visbug-label')
 
       label.text = template
       label.position = {
-        boundingRect:   el.getBoundingClientRect(),
+        boundingRect,
         node_label_id:  id,
-        isFixed: isFixed(el),
+        isFixed: fixed,
       }
-
-      document.body.appendChild(label)
 
       $(label).on('query', ({detail}) => {
         if (!detail.text) return
@@ -759,33 +800,31 @@ export function Selectable(visbug, history) {
       labels[labels.length] = label
 
       handles.forEach(handle => {
+        if (!handle.isConnected) return
         handle.hidePopover && handle.hidePopover()
-        if (handle.isConnected && handle.showPopover) handle.showPopover()
+        handle.showPopover && handle.showPopover()
       })
 
       return label
     }
   }
 
-  const createHandle = ({el, id}) => {
+  const createHandle = ({el, fixed, id, quad}) => {
     if (!handles[id]) {
       const handle = document.createElement('visbug-handles')
 
-      handle.position = { el, node_label_id: id }
-
-      document.body.appendChild(handle)
+      handle.position = {el, fixed, node_label_id: id, quad}
 
       handles[handles.length] = handle
       return handle
     }
   }
 
-  const createRotation = ({el, id}) => {
+  const createRotation = ({el, id, quad}) => {
     if (!rotations[id]) {
       const rotation = document.createElement('visbug-rotation')
 
-      rotation.position = {el, node_label_id: id}
-      document.body.appendChild(rotation)
+      rotation.position = {el, node_label_id: id, quad}
 
       rotations[id] = rotation
       return rotation

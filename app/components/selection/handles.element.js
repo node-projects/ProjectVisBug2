@@ -42,10 +42,10 @@ export class Handles extends HTMLElement {
     })
   }
 
-  set position({el, node_label_id}) {
+  set position({el, node_label_id, quad = getBoxQuad(el), fixed = isFixed(el)}) {
     this.source_el = el
     const backdrop = this.$shadow.querySelector('visbug-boxmodel')
-    this.$shadow.innerHTML = this.render(getBoxQuad(el), node_label_id, isFixed(el))
+    this.$shadow.innerHTML = this.render(quad, node_label_id, fixed)
 
     const actions = this.$shadow.querySelector('visbug-selection-actions')
     if (actions) actions.source = el

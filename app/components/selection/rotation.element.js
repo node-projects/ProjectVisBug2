@@ -12,6 +12,7 @@ export class Rotation extends HTMLElement {
     this.styles = [RotationStyles]
     this.position_frame = null
     this.source_el = null
+    this.initial_quad = null
     this.on_pointer_down = this.on_pointer_down.bind(this)
     this.on_pointer_move = this.on_pointer_move.bind(this)
     this.on_pointer_up = this.on_pointer_up.bind(this)
@@ -27,7 +28,8 @@ export class Rotation extends HTMLElement {
     this.handle.addEventListener('pointerdown', this.on_pointer_down)
     window.addEventListener('resize', this.on_position_change)
     window.addEventListener('scroll', this.on_position_change, true)
-    this.update_position()
+    this.update_position(this.initial_quad)
+    this.initial_quad = null
   }
 
   disconnectedCallback() {
@@ -41,10 +43,14 @@ export class Rotation extends HTMLElement {
     this.restore_transition()
   }
 
-  set position({el, node_label_id}) {
+  set position({el, node_label_id, quad = null}) {
     this.source_el = el
+    this.initial_quad = quad
     this.setAttribute('data-label-id', node_label_id)
-    if (this.pointer_id === undefined) this.update_position()
+    if (this.pointer_id === undefined && this.handle) {
+      this.update_position(quad)
+      this.initial_quad = null
+    }
   }
 
   on_position_change() {
@@ -56,10 +62,10 @@ export class Rotation extends HTMLElement {
     })
   }
 
-  update_position() {
+  update_position(quad = null) {
     if (!this.handle || !this.source_el?.isConnected) return
 
-    const quad = getBoxQuad(this.source_el)
+    quad ||= getBoxQuad(this.source_el)
     const center = quadCenter(quad)
     const handle = pointOutsideQuad(quad, 'top', HANDLE_DISTANCE)
 

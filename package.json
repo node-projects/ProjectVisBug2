@@ -37,6 +37,7 @@
     "extension:firefox": "npm run dev:extension && cd extension && web-ext run",
     "extension:firefox-build": "npm run extension:build && cd extension && web-ext build",
     "test": "ava",
+    "test:perf": "node tests/selection-performance.mjs",
     "test:dev": "ava -v -w",
     "test:server": "browser-sync start --server \"app\" --files \"app/index.html,app/bundle.css,app/bundle.js\" --no-open --no-notify --no-ui --no-ghost-mode",
     "test:ci": "npm run bundle && start-server-and-test test:server http://localhost:3000/bundle.js test"
