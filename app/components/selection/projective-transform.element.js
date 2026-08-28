@@ -33,6 +33,7 @@ export class ProjectiveTransform extends HTMLElement {
     this.on_transition_run = this.on_transition_run.bind(this)
     this.on_transition_end = this.on_transition_end.bind(this)
     this.refresh_transition = this.refresh_transition.bind(this)
+    this.on_activation_pointer_end = this.on_activation_pointer_end.bind(this)
   }
 
   connectedCallback() {
@@ -43,11 +44,12 @@ export class ProjectiveTransform extends HTMLElement {
     this.svg.addEventListener('pointerdown', this.on_pointer_down)
     window.addEventListener('resize', this.on_position_change)
     window.addEventListener('scroll', this.on_position_change, true)
-    this.outside_click_timer = setTimeout(() => {
-      if (this.isConnected)
-        document.addEventListener('click', this.on_document_click, true)
-    })
+    document.addEventListener('click', this.on_document_click, true)
     document.addEventListener('visbug-tool-change', this.on_tool_change)
+    if (this.activation_pointer_id !== undefined) {
+      document.addEventListener('pointerup', this.on_activation_pointer_end, true)
+      document.addEventListener('pointercancel', this.on_activation_pointer_end, true)
+    }
 
     this.source_observer = new MutationObserver(this.on_position_change)
     this.observe_source()
@@ -64,9 +66,11 @@ export class ProjectiveTransform extends HTMLElement {
     this.svg?.removeEventListener('pointerdown', this.on_pointer_down)
     window.removeEventListener('resize', this.on_position_change)
     window.removeEventListener('scroll', this.on_position_change, true)
-    clearTimeout(this.outside_click_timer)
+    clearTimeout(this.activation_pointer_timer)
     document.removeEventListener('click', this.on_document_click, true)
     document.removeEventListener('visbug-tool-change', this.on_tool_change)
+    document.removeEventListener('pointerup', this.on_activation_pointer_end, true)
+    document.removeEventListener('pointercancel', this.on_activation_pointer_end, true)
     this.source_observer?.disconnect()
     this.source_el?.removeEventListener('transitionrun', this.on_transition_run)
     this.source_el?.removeEventListener('transitionend', this.on_transition_end)
@@ -147,7 +151,18 @@ export class ProjectiveTransform extends HTMLElement {
   }
 
   on_document_click(event) {
+    if (this.activation_pointer_id !== undefined) return
     if (!event.composedPath().includes(this)) this.remove()
+  }
+
+  on_activation_pointer_end(event) {
+    if (event.pointerId !== this.activation_pointer_id) return
+
+    document.removeEventListener('pointerup', this.on_activation_pointer_end, true)
+    document.removeEventListener('pointercancel', this.on_activation_pointer_end, true)
+    this.activation_pointer_timer = setTimeout(() => {
+      this.activation_pointer_id = undefined
+    })
   }
 
   on_tool_change() {

@@ -55,7 +55,7 @@ export class SelectionActions extends HTMLElement {
     event.preventDefault()
     event.stopPropagation()
     if (this.hasAttribute('busy')) return
-    this.runAction(button)
+    this.runAction(button, event)
   }
 
   on_click(event) {
@@ -69,10 +69,10 @@ export class SelectionActions extends HTMLElement {
     // can be light-dismissed. A zero-detail click is keyboard/programmatic.
     if (event.detail) return
     if (this.hasAttribute('busy')) return
-    this.runAction(button)
+    this.runAction(button, event)
   }
 
-  async runAction(button) {
+  async runAction(button, activationEvent) {
     const label = button.textContent
     button.ariaDisabled = 'true'
     button.textContent = `${label}…`
@@ -81,7 +81,10 @@ export class SelectionActions extends HTMLElement {
     try {
       const visbug = document.querySelector('vis-bug')
       if (!visbug) throw new Error('VisBug is not connected')
-      await visbug.execCommand(button.dataset.command, {source: this.source_el})
+      await visbug.execCommand(button.dataset.command, {
+        source: this.source_el,
+        activationEvent,
+      })
       this.close()
     }
     catch (error) {
