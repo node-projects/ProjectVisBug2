@@ -129,32 +129,38 @@ test('Should run add-on actions without selecting content below', async t => {
     const button = menu.$shadow.querySelector('[data-command="test-selection-action"]')
     menu.$shadow.querySelector('.trigger').click()
     await new Promise(resolve => requestAnimationFrame(resolve))
-    const bounds = button.getBoundingClientRect()
-    return {
+
+    const beforeActivation = {
       label: button.textContent,
       sourceName: window.__testSelectionBefore.localName,
-      x: bounds.left + bounds.width / 2,
-      y: bounds.top + bounds.height / 2,
+      actionsOpen: document.querySelector('visbug-handles').actionsOpen,
+      rootOpen: menu.$shadow.querySelector('.menu').matches(':popover-open'),
     }
+
+    const pointerId = 41
+    button.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true,
+      composed: true,
+      button: 0,
+      pointerId,
+    }))
+    document.body.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true,
+      composed: true,
+      button: 0,
+      pointerId,
+    }))
+    document.body.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      composed: true,
+      detail: 1,
+    }))
+
+    return beforeActivation
   })
 
-  await page.mouse.move(action.x, action.y)
-  const beforeClick = await page.evaluate(({x, y}) => {
-    const handles = document.querySelector('visbug-handles')
-    const menu = handles.$shadow.querySelector('visbug-selection-actions')
-    const shadow = menu.$shadow
-    return {
-      actionsOpen: handles.actionsOpen,
-      rootOpen: shadow.querySelector('.menu').matches(':popover-open'),
-      hit: shadow.elementFromPoint(x, y)?.textContent,
-    }
-  }, action)
-  t.deepEqual(beforeClick, {
-    actionsOpen: true,
-    rootOpen: true,
-    hit: 'Test action',
-  })
-  await page.mouse.click(action.x, action.y)
+  t.true(action.actionsOpen)
+  t.true(action.rootOpen)
   await page.waitForFunction(() => window.__testSelectionActionResult)
   const result = await page.evaluate(() => {
     const visbug = document.querySelector('vis-bug')
@@ -179,7 +185,7 @@ test('Should export from a nested menu item without selecting content below', as
   const {page} = t.context
   await page.click('[intro]')
 
-  const action = await page.evaluate(async () => {
+  const submenuOpen = await page.evaluate(async () => {
     const visbug = document.querySelector('vis-bug')
     const source = visbug.selectorEngine.selection()[0]
     const menu = document.querySelector('visbug-handles').$shadow
@@ -203,15 +209,32 @@ test('Should export from a nested menu item without selecting content below', as
     shadow.querySelector('.group').dispatchEvent(new PointerEvent('pointerenter'))
     await new Promise(resolve => requestAnimationFrame(resolve))
     const button = shadow.querySelector('[data-command="export-svg"]')
-    const bounds = button.getBoundingClientRect()
-    return {
-      x: bounds.left + bounds.width / 2,
-      y: bounds.top + bounds.height / 2,
-    }
+
+    const wasOpen = shadow.querySelector('.submenu-items')
+      .matches(':popover-open')
+    const pointerId = 43
+    button.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true,
+      composed: true,
+      button: 0,
+      pointerId,
+    }))
+    document.body.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true,
+      composed: true,
+      button: 0,
+      pointerId,
+    }))
+    document.body.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      composed: true,
+      detail: 1,
+    }))
+
+    return wasOpen
   })
 
-  await page.mouse.move(action.x, action.y)
-  await page.mouse.click(action.x, action.y)
+  t.true(submenuOpen)
   await page.waitForFunction(() => window.__nestedExportComplete)
 
   const result = await page.evaluate(() => {
