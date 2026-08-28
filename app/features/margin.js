@@ -1,5 +1,5 @@
 import hotkeys from 'hotkeys-js'
-import { metaKey, getStyle, getSide, showHideSelected } from '../utilities/'
+import { metaKey, getStyle, getSide } from '../utilities/'
 import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
@@ -36,7 +36,6 @@ export function Margin(visbug, history) {
 }
 
 const updateMargin = (els, direction) => els
-    .map(el => showHideSelected(el))
     .map(el => ({
       el,
       style:    'margin' + getSide(direction),
@@ -104,33 +103,37 @@ function removeBackgrounds(els) {
   })
 }
 
-export function createMarginVisual(el, hover = false) {
+export function createMarginVisual(
+  el, hover = false, boxdisplay = document.createElement('visbug-boxmodel')
+) {
   const bounds            = el.getBoundingClientRect()
   const calculatedStyle   = getStyle(el, 'margin')
-  const boxdisplay        = document.createElement('visbug-boxmodel')
 
-  if (calculatedStyle !== '0px') {
-    const sides = {
-      top:    getStyle(el, 'marginTop'),
-      right:  getStyle(el, 'marginRight'),
-      bottom: getStyle(el, 'marginBottom'),
-      left:   getStyle(el, 'marginLeft'),
-    }
+  if (calculatedStyle === '0px') {
+    boxdisplay.position = null
+    return boxdisplay
+  }
 
-    Object.entries(sides).forEach(([side, val]) => {
-      if (typeof val !== 'number')
-        val = parseInt(getStyle(el, 'margin'+'-'+side).slice(0, -2))
+  const sides = {
+    top:    getStyle(el, 'marginTop'),
+    right:  getStyle(el, 'marginRight'),
+    bottom: getStyle(el, 'marginBottom'),
+    left:   getStyle(el, 'marginLeft'),
+  }
 
-      sides[side] = Math.round(val.toFixed(1) * 100) / 100
-    })
+  Object.entries(sides).forEach(([side, val]) => {
+    if (typeof val !== 'number')
+      val = parseInt(getStyle(el, 'margin'+'-'+side).slice(0, -2))
 
-    boxdisplay.position = {
-      mode: 'margin',
-      color: hover ? 'purple' : 'pink',
-      bounds,
-      sides,
-      element: el
-    }
+    sides[side] = Math.round(val.toFixed(1) * 100) / 100
+  })
+
+  boxdisplay.position = {
+    mode: 'margin',
+    color: hover ? 'purple' : 'pink',
+    bounds,
+    sides,
+    element: el
   }
 
   return boxdisplay
