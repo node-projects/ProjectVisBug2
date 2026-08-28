@@ -48,14 +48,47 @@ const stopBubbling  = e => e.key != 'Escape' && e.stopPropagation()
 export function Search(node) {
   if (node) node[0].appendChild(search[0])
 
+  let idleQuery
+  const pendingSubmits = new Set()
+
+  const cancelIdleQuery = () => {
+    if (idleQuery === undefined) return
+    window.cancelIdleCallback(idleQuery)
+    idleQuery = undefined
+  }
+
+  const executeQuery = query => {
+    cancelIdleQuery()
+    queryPage(query)
+  }
+
   const onQuery = e => {
     e.preventDefault()
     e.stopPropagation()
 
     const query = e.target.value
+    if (pendingSubmits.size) return
 
-    window.requestIdleCallback(_ =>
-      queryPage(query))
+    cancelIdleQuery()
+    idleQuery = window.requestIdleCallback(_ => {
+      idleQuery = undefined
+      queryPage(query)
+    })
+  }
+
+  const onKeydown = e => {
+    stopBubbling(e)
+    if (e.key !== 'Enter' || e.isComposing) return
+
+    // A datalist applies its highlighted value as the default action for Enter,
+    // after keydown listeners have run. Submit in the next task so the selected
+    // command is available, and read the value again for repeated submissions.
+    const input = e.target
+    const submit = window.setTimeout(() => {
+      pendingSubmits.delete(submit)
+      executeQuery(input.value)
+    })
+    pendingSubmits.add(submit)
   }
 
   const focus = e =>
@@ -63,7 +96,7 @@ export function Search(node) {
 
   searchInput.on('click', focus)
   searchInput.on('input', onQuery)
-  searchInput.on('keydown', stopBubbling)
+  searchInput.on('keydown', onKeydown)
   // searchInput.on('blur', hideSearchBar)
 
   showSearchBar()
@@ -76,8 +109,11 @@ export function Search(node) {
 
   return () => {
     hideSearchBar()
-    searchInput.off('oninput', onQuery)
-    searchInput.off('keydown', stopBubbling)
+    cancelIdleQuery()
+    pendingSubmits.forEach(submit => window.clearTimeout(submit))
+    pendingSubmits.clear()
+    searchInput.off('input', onQuery)
+    searchInput.off('keydown', onKeydown)
     searchInput.off('blur', hideSearchBar)
   }
 }
@@ -106,10 +142,8 @@ export function queryPage(query, fn) {
     let matches = querySelectorAllDeep(query + notList)
     if (!matches.length) matches = querySelectorAllDeep(query)
     if (matches.length) {
-      matches.forEach(el =>
-        fn
-          ? fn(el)
-          : SelectorEngine.select(el))
+      if (fn) matches.forEach(el => fn(el))
+      else SelectorEngine.select(matches)
     }
   }
   catch (err) {}

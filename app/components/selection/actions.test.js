@@ -55,32 +55,89 @@ test('Should hide when no contributing plug-in is active', async t => {
   t.true(hidden)
 })
 
-test('Should stay anchored while hovering other elements', async t => {
+test('Should collapse the submenu while keeping the actions menu anchored', async t => {
   const {page} = t.context
   await page.click('article:nth-of-type(2)')
 
-  const before = await page.evaluate(() => {
+  const groupPosition = await page.evaluate(() => {
     const shadow = document.querySelector('visbug-handles').$shadow
       .querySelector('visbug-selection-actions').$shadow
     shadow.querySelector('.trigger').click()
-    shadow.querySelector('.group').dispatchEvent(new PointerEvent('pointerenter'))
-    const bounds = shadow.querySelector('.submenu-items').getBoundingClientRect()
-    return {open: true, x: bounds.x, y: bounds.y}
+    const bounds = shadow.querySelector('.group').getBoundingClientRect()
+    return {x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2}
+  })
+  await page.mouse.move(groupPosition.x, groupPosition.y)
+  await page.waitForFunction(() => {
+    const shadow = document.querySelector('visbug-handles').$shadow
+      .querySelector('visbug-selection-actions').$shadow
+    return shadow.querySelector('.submenu-items').matches(':popover-open')
+  })
+  const before = await page.evaluate(() => {
+    const shadow = document.querySelector('visbug-handles').$shadow
+      .querySelector('visbug-selection-actions').$shadow
+    const bounds = shadow.querySelector('.menu').getBoundingClientRect()
+    return {x: bounds.x, y: bounds.y}
   })
   const hoverTarget = await page.$eval('article:nth-of-type(4)', element => {
     const bounds = element.getBoundingClientRect()
     return {x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2}
   })
   await page.mouse.move(hoverTarget.x, hoverTarget.y)
+  await new Promise(resolve => setTimeout(resolve, 150))
   const after = await page.evaluate(() => {
     const shadow = document.querySelector('visbug-handles').$shadow
       .querySelector('visbug-selection-actions').$shadow
-    const submenu = shadow.querySelector('.submenu-items')
-    const bounds = submenu.getBoundingClientRect()
-    return {open: submenu.matches(':popover-open'), x: bounds.x, y: bounds.y}
+    const bounds = shadow.querySelector('.menu').getBoundingClientRect()
+    return {
+      submenuOpen: shadow.querySelector('.submenu-items').matches(':popover-open'),
+      rootOpen: shadow.querySelector('.menu').matches(':popover-open'),
+      x: bounds.x,
+      y: bounds.y,
+    }
   })
 
-  t.deepEqual(after, before)
+  t.deepEqual(after, {
+    submenuOpen: false,
+    rootOpen: true,
+    ...before,
+  })
+})
+
+test('Should keep the submenu open while crossing from its parent', async t => {
+  const {page} = t.context
+  await page.click('[intro]')
+
+  const groupPosition = await page.evaluate(() => {
+    const shadow = document.querySelector('visbug-handles').$shadow
+      .querySelector('visbug-selection-actions').$shadow
+    shadow.querySelector('.trigger').click()
+    const bounds = shadow.querySelector('.group').getBoundingClientRect()
+    return {x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2}
+  })
+
+  await page.mouse.move(groupPosition.x, groupPosition.y)
+  await page.waitForFunction(() => {
+    const shadow = document.querySelector('visbug-handles').$shadow
+      .querySelector('visbug-selection-actions').$shadow
+    return shadow.querySelector('.submenu-items').matches(':popover-open')
+  })
+  const menuBounds = await page.evaluate(() => {
+    const shadow = document.querySelector('visbug-handles').$shadow
+      .querySelector('visbug-selection-actions').$shadow
+    const bounds = shadow.querySelector('.submenu-items').getBoundingClientRect()
+    return {x: bounds.left + 10, y: bounds.top + 10}
+  })
+
+  await page.mouse.move(menuBounds.x, menuBounds.y)
+  await new Promise(resolve => setTimeout(resolve, 150))
+
+  const submenuOpen = await page.evaluate(() => {
+    const shadow = document.querySelector('visbug-handles').$shadow
+      .querySelector('visbug-selection-actions').$shadow
+    return shadow.querySelector('.submenu-items').matches(':popover-open')
+  })
+
+  t.true(submenuOpen)
 })
 
 test('Should flip the export submenu left at the viewport edge', async t => {

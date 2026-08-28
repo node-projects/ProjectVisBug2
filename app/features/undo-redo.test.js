@@ -114,3 +114,36 @@ test('style, DOM, and rotation edits can be undone and redone', async t => {
   }))
   assertOutlineClose(t, redoneOutline, rotatedOutline)
 })
+
+test('bulk selection keeps multi-element edits in one undo step', async t => {
+  const {page} = t.context
+  const modifier = await pptrMetaKey(page)
+  const targets = '[bgfg] .filled-circle'
+
+  await changeMode({page, tool: 'margin'})
+  const historyAfterSelection = await page.evaluate(selector => {
+    const visbug = document.querySelector('vis-bug')
+    visbug.selectorEngine.select(document.querySelectorAll(selector))
+    return visbug.history.size
+  }, targets)
+
+  t.deepEqual(historyAfterSelection, {undo: 0, redo: 0})
+  t.is(await page.$$eval(targets, elements =>
+    elements.filter(element => element.hasAttribute('data-selected')).length), 4)
+
+  await page.keyboard.press('ArrowUp')
+  t.deepEqual(await page.$$eval(targets, elements =>
+    elements.map(element => element.style.marginTop)),
+  ['1px', '1px', '1px', '1px'])
+  t.deepEqual(await page.$eval('vis-bug', visbug => visbug.history.size),
+    {undo: 1, redo: 0})
+
+  await shortcut(page, modifier)
+  t.deepEqual(await page.$$eval(targets, elements =>
+    elements.map(element => element.style.marginTop)), ['', '', '', ''])
+
+  await shortcut(page, modifier, {shift: true})
+  t.deepEqual(await page.$$eval(targets, elements =>
+    elements.map(element => element.style.marginTop)),
+  ['1px', '1px', '1px', '1px'])
+})
