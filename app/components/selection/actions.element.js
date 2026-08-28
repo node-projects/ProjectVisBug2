@@ -14,6 +14,7 @@ export class SelectionActions extends HTMLElement {
     this.on_keydown = this.on_keydown.bind(this)
     this.on_pointerdown = this.on_pointerdown.bind(this)
     this.on_click = this.on_click.bind(this)
+    this.submenu_close_timer = null
   }
 
   connectedCallback() {
@@ -30,6 +31,7 @@ export class SelectionActions extends HTMLElement {
     this.removeEventListener('keydown', this.on_keydown)
     this.$shadow.removeEventListener('pointerdown', this.on_pointerdown)
     this.$shadow.removeEventListener('click', this.on_click)
+    this.cancelSubmenuClose()
   }
 
   set source(element) {
@@ -102,11 +104,28 @@ export class SelectionActions extends HTMLElement {
   }
 
   close() {
+    this.cancelSubmenuClose()
     Array.from(this.$shadow.querySelectorAll('[popover]'))
       .reverse()
       .forEach(popover => {
         if (popover.matches(':popover-open')) popover.hidePopover()
       })
+  }
+
+  cancelSubmenuClose() {
+    if (this.submenu_close_timer === null) return
+    window.clearTimeout(this.submenu_close_timer)
+    this.submenu_close_timer = null
+  }
+
+  scheduleSubmenuClose(popover) {
+    this.cancelSubmenuClose()
+    this.submenu_close_timer = window.setTimeout(() => {
+      this.submenu_close_timer = null
+      const focused = this.$shadow.activeElement
+      if (focused === popover.previousElementSibling || popover.contains(focused)) return
+      if (popover.matches(':popover-open')) popover.hidePopover()
+    }, 120)
   }
 
   createAction(action) {
@@ -121,6 +140,7 @@ export class SelectionActions extends HTMLElement {
   }
 
   showSubmenu(popover, source) {
+    this.cancelSubmenuClose()
     if (!popover.showPopover || popover.matches(':popover-open')) return
 
     try {
@@ -166,8 +186,14 @@ export class SelectionActions extends HTMLElement {
 
     button.addEventListener('pointerenter', () =>
       this.showSubmenu(submenu, button))
+    button.addEventListener('pointerleave', () =>
+      this.scheduleSubmenuClose(submenu))
     button.addEventListener('focus', () =>
       this.showSubmenu(submenu, button))
+    submenu.addEventListener('pointerenter', () =>
+      this.cancelSubmenuClose())
+    submenu.addEventListener('pointerleave', () =>
+      this.scheduleSubmenuClose(submenu))
 
     fragment.append(button, submenu)
     return fragment
