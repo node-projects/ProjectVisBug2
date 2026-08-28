@@ -1,5 +1,6 @@
 import $ from 'blingblingjs'
 import { HandleStyles } from '../styles.store'
+import { screenDeltaToLocal } from './resize'
 
 export class Handle extends HTMLElement {
 
@@ -47,9 +48,16 @@ export class Handle extends HTMLElement {
 
     if (!sourceEl) return
 
-    const t = sourceEl.convertPointFromNode(e, document.documentElement)
-
-    const { x: initialX, y: initialY } = t
+    const initialPointer = {x: e.clientX, y: e.clientY}
+    const initialLocal = sourceEl.convertPointFromNode(initialPointer, document.documentElement)
+    const screenXLocal = sourceEl.convertPointFromNode(
+      {x: initialPointer.x + 1, y: initialPointer.y},
+      document.documentElement,
+    )
+    const screenYLocal = sourceEl.convertPointFromNode(
+      {x: initialPointer.x, y: initialPointer.y + 1},
+      document.documentElement,
+    )
     const initialStyle = getComputedStyle(sourceEl)
     const initialWidth = parseFloat(initialStyle.width)
     const initialHeight = parseFloat(initialStyle.height)
@@ -68,10 +76,12 @@ export class Handle extends HTMLElement {
       e.preventDefault()
       e.stopPropagation()
 
-      const {x: newX, y: newY} = sourceEl.convertPointFromNode(e, document.documentElement)
-
-      const diffX = newX - initialX
-      const diffY = newY - initialY
+      const {x: diffX, y: diffY} = screenDeltaToLocal(
+        {x: e.clientX - initialPointer.x, y: e.clientY - initialPointer.y},
+        initialLocal,
+        screenXLocal,
+        screenYLocal,
+      )
       const leftWidth = Math.max(0, initialWidth - diffX)
       const rightWidth = Math.max(0, initialWidth + diffX)
       const topHeight = Math.max(0, initialHeight - diffY)
@@ -83,68 +93,52 @@ export class Handle extends HTMLElement {
         case 'top-start': {
           const newTransform = initialTransform.translate(leftShift, topShift)
 
-          requestAnimationFrame(() => {
-            sourceEl.style.width = `${leftWidth}px`
-            sourceEl.style.height = `${topHeight}px`
-            sourceEl.style.transform = newTransform.toString()
-          })
+          sourceEl.style.width = `${leftWidth}px`
+          sourceEl.style.height = `${topHeight}px`
+          sourceEl.style.transform = newTransform.toString()
           break
         }
         case 'top-center': {
           const newTransform = initialTransform.translate(0, topShift)
 
-          requestAnimationFrame(() => {
-            sourceEl.style.height = `${topHeight}px`
-            sourceEl.style.transform = newTransform.toString()
-          })
+          sourceEl.style.height = `${topHeight}px`
+          sourceEl.style.transform = newTransform.toString()
           break
         }
         case 'top-end': {
           const newTransform = initialTransform.translate(0, topShift)
 
-          requestAnimationFrame(() => {
-            sourceEl.style.width = `${rightWidth}px`
-            sourceEl.style.height = `${topHeight}px`
-            sourceEl.style.transform = newTransform.toString()
-          })
+          sourceEl.style.width = `${rightWidth}px`
+          sourceEl.style.height = `${topHeight}px`
+          sourceEl.style.transform = newTransform.toString()
           break
         }
         case 'middle-start': {
           const newTransform = initialTransform.translate(leftShift)
 
-          requestAnimationFrame(() => {
-            sourceEl.style.width = `${leftWidth}px`
-            sourceEl.style.transform = newTransform.toString()
-          })
+          sourceEl.style.width = `${leftWidth}px`
+          sourceEl.style.transform = newTransform.toString()
           break
         }
         case 'middle-end': {
-          requestAnimationFrame(() => {
-            sourceEl.style.width = `${rightWidth}px`
-          })
+          sourceEl.style.width = `${rightWidth}px`
           break
         }
         case 'bottom-start': {
           const newTransform = initialTransform.translate(leftShift, 0)
 
-          requestAnimationFrame(() => {
-            sourceEl.style.width = `${leftWidth}px`
-            sourceEl.style.height = `${bottomHeight}px`
-            sourceEl.style.transform = newTransform.toString()
-          })
+          sourceEl.style.width = `${leftWidth}px`
+          sourceEl.style.height = `${bottomHeight}px`
+          sourceEl.style.transform = newTransform.toString()
           break
         }
         case 'bottom-center': {
-          requestAnimationFrame(() => {
-            sourceEl.style.height = `${bottomHeight}px`
-          })
+          sourceEl.style.height = `${bottomHeight}px`
           break
         }
         case 'bottom-end': {
-          requestAnimationFrame(() => {
-            sourceEl.style.width = `${rightWidth}px`
-            sourceEl.style.height = `${bottomHeight}px`
-          })
+          sourceEl.style.width = `${rightWidth}px`
+          sourceEl.style.height = `${bottomHeight}px`
           break
         }
       }

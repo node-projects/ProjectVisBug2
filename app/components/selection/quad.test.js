@@ -1,5 +1,12 @@
 import test from 'ava'
-import { getBoxQuad, quadBounds, quadPath, sideMidpoint } from './quad.js'
+import {
+  getBoxQuad,
+  pointOutsideQuad,
+  quadBounds,
+  quadCenter,
+  quadPath,
+  sideMidpoint,
+} from './quad.js'
 
 const quad = {
   p1: {x: 10, y: 20},
@@ -28,6 +35,17 @@ test('calculates transformed side midpoints', t => {
   t.deepEqual(sideMidpoint(quad, 'right'), {x: 55, y: 25})
   t.deepEqual(sideMidpoint(quad, 'bottom'), {x: 40, y: 45})
   t.deepEqual(sideMidpoint(quad, 'left'), {x: 15, y: 35})
+})
+
+test('calculates the center of a transformed quad', t => {
+  t.deepEqual(quadCenter(quad), {x: 35, y: 30})
+})
+
+test('places a point beyond a transformed side', t => {
+  const point = pointOutsideQuad(quad, 'top', 15)
+
+  t.true(Math.abs(point.x - 25.2565835097) < 0.000001)
+  t.true(Math.abs(point.y - 0.7697505292) < 0.000001)
 })
 
 test('uses getBoxQuads when the element provides a quad', t => {

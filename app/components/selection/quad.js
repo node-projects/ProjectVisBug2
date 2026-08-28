@@ -36,6 +36,26 @@ export const sideMidpoint = (quad, side) => {
   }
 }
 
+export const quadCenter = quad => ({
+  x: (quad.p1.x + quad.p2.x + quad.p3.x + quad.p4.x) / 4,
+  y: (quad.p1.y + quad.p2.y + quad.p3.y + quad.p4.y) / 4,
+})
+
+export const pointOutsideQuad = (quad, side, distance) => {
+  const midpoint = sideMidpoint(quad, side)
+  const center = quadCenter(quad)
+  const x = midpoint.x - center.x
+  const y = midpoint.y - center.y
+  const length = Math.hypot(x, y)
+
+  if (!length) return midpoint
+
+  return {
+    x: midpoint.x + (x / length * distance),
+    y: midpoint.y + (y / length * distance),
+  }
+}
+
 const rectToQuad = ({left, right, top, bottom}) => ({
   p1: {x: left,  y: top},
   p2: {x: right, y: top},

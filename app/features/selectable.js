@@ -25,6 +25,7 @@ export function Selectable(visbug) {
   let selectedCallbacks   = []
   let labels              = []
   let handles             = []
+  let rotations           = []
 
   const hover_state       = {
     target:   null,
@@ -48,7 +49,7 @@ export function Selectable(visbug) {
     hotkeys(`${metaKey}+alt+v`, e => on_paste_styles())
     hotkeys('esc', on_esc)
     hotkeys(`${metaKey}+d`, on_duplicate)
-    hotkeys('backspace,del,delete', on_delete)
+    hotkeys('backspace,delete', on_delete)
     hotkeys('alt+del,alt+backspace', on_clearstyles)
     hotkeys(`${metaKey}+e,${metaKey}+shift+e`, on_expand_selection)
     hotkeys(`${metaKey}+g,${metaKey}+shift+g`, on_group)
@@ -68,7 +69,7 @@ export function Selectable(visbug) {
     document.removeEventListener('cut', on_cut)
     document.removeEventListener('paste', on_paste)
 
-    hotkeys.unbind(`esc,${metaKey}+d,backspace,del,delete,alt+del,alt+backspace,${metaKey}+e,${metaKey}+shift+e,${metaKey}+g,${metaKey}+shift+g,tab,shift+tab,enter,shift+enter`)
+    hotkeys.unbind(`esc,${metaKey}+d,backspace,delete,alt+del,alt+backspace,${metaKey}+e,${metaKey}+shift+e,${metaKey}+g,${metaKey}+shift+g,tab,shift+tab,enter,shift+enter`)
   }
 
   const on_click = e => {
@@ -92,7 +93,7 @@ export function Selectable(visbug) {
   }
 
   const unselect = id => {
-    [...labels, ...handles]
+    [...labels, ...handles, ...rotations]
       .filter(node =>
           node.getAttribute('data-label-id') === id)
         .forEach(node =>
@@ -127,7 +128,7 @@ export function Selectable(visbug) {
 
     document.onkeydown = function(e) {
       if (hotkeys.ctrl && selected.length) {
-        $('visbug-handles, visbug-label, visbug-hover, visbug-grip').forEach(el =>
+        $('visbug-handles, visbug-label, visbug-hover, visbug-grip, visbug-rotation').forEach(el =>
           el.style.display = 'none')
 
         did_hide = true
@@ -136,7 +137,7 @@ export function Selectable(visbug) {
 
     document.onkeyup = function(e) {
       if (did_hide) {
-        $('visbug-handles, visbug-label, visbug-hover, visbug-grip').forEach(el =>
+        $('visbug-handles, visbug-label, visbug-hover, visbug-grip, visbug-rotation').forEach(el =>
           el.style.display = null)
 
         did_hide = false
@@ -427,7 +428,7 @@ export function Selectable(visbug) {
     if (tool === 'guides') {
       handles.forEach(handle => {
         handle.hidePopover &&  handle.hidePopover()
-        handle.showPopover && handle.showPopover()
+        if (handle.isConnected && handle.showPopover) handle.showPopover()
       })
     }
   }
@@ -454,7 +455,7 @@ export function Selectable(visbug) {
 
     $('visbug-metatip, visbug-ally').forEach(tip => {
       tip.hidePopover && tip.hidePopover()
-      tip.showPopover && tip.showPopover()
+      if (tip.isConnected && tip.showPopover) tip.showPopover()
     })
 
     selected.unshift(el)
@@ -483,11 +484,13 @@ export function Selectable(visbug) {
       ...$('visbug-label'),
       ...$('visbug-hover'),
       ...$('visbug-distance'),
+      ...$('visbug-rotation'),
     ]).forEach(el =>
       el.remove())
 
     labels    = []
     handles   = []
+    rotations = []
     selected  = []
 
     !silent && tellWatchers()
@@ -500,15 +503,17 @@ export function Selectable(visbug) {
       else if (el.parentNode)   return el.parentNode
     })
 
-    Array.from([...selected, ...labels, ...handles]).forEach(el =>
+    Array.from([...selected, ...labels, ...handles, ...$('visbug-rotation')]).forEach(el =>
       el.remove())
 
     labels    = []
     handles   = []
+    rotations = []
     selected  = []
 
-    selected_after_delete.forEach(el =>
-      select(el))
+    selected_after_delete
+      .filter(el => el?.isConnected && !isOffBounds(el))
+      .forEach(el => select(el))
   }
 
   const expandSelection = ({query, all = false}) => {
@@ -568,6 +573,7 @@ export function Selectable(visbug) {
 
   const overlayMetaUI = ({el, id, no_label = true}) => {
     let handle = createHandle({el, id})
+    let rotation = createRotation({el, id})
     let label  = no_label
       ? null
       : createLabel({
@@ -576,18 +582,20 @@ export function Selectable(visbug) {
           template: handleLabelText(el, visbug.activeTool)
         })
 
-    let observer        = createObserver(el, {handle,label})
-    let parentObserver  = createObserver(el, {handle,label})
+    rotation.on_geometry_change = () => {
+      handle && setHandle(el, handle)
+    }
+
+    let observer        = createObserver(el, {handle,label,rotation})
+    let parentObserver  = createObserver(el, {handle,label,rotation})
 
     observer.observe(el, { attributes: true })
     parentObserver.observe(el.parentNode, { childList:true, subtree:true })
 
-    if (label !== null) {
-      onRemove(label, () => {
-        observer.disconnect()
-        parentObserver.disconnect()
-      })
-    }
+    onRemove(handle, () => {
+      observer.disconnect()
+      parentObserver.disconnect()
+    })
   }
 
   const setLabel = (el, label) => {
@@ -596,7 +604,7 @@ export function Selectable(visbug) {
 
     handles.forEach(handle => {
       handle.hidePopover && handle.hidePopover()
-      handle.showPopover && handle.showPopover()
+      if (handle.isConnected && handle.showPopover) handle.showPopover()
     })
   }
 
@@ -636,7 +644,7 @@ export function Selectable(visbug) {
 
       handles.forEach(handle => {
         handle.hidePopover && handle.hidePopover()
-        handle.showPopover && handle.showPopover()
+        if (handle.isConnected && handle.showPopover) handle.showPopover()
       })
 
       return label
@@ -653,6 +661,18 @@ export function Selectable(visbug) {
 
       handles[handles.length] = handle
       return handle
+    }
+  }
+
+  const createRotation = ({el, id}) => {
+    if (!rotations[id]) {
+      const rotation = document.createElement('visbug-rotation')
+
+      rotation.position = {el, node_label_id: id}
+      document.body.appendChild(rotation)
+
+      rotations[id] = rotation
+      return rotation
     }
   }
 
@@ -710,10 +730,18 @@ export function Selectable(visbug) {
     }
   }
 
-  const createObserver = (node, {label,handle}) =>
+  const setRotation = (el, rotation) => {
+    rotation.position = {
+      el,
+      node_label_id: el.getAttribute('data-label-id'),
+    }
+  }
+
+  const createObserver = (node, {label,handle,rotation}) =>
     new MutationObserver(list => {
       label && setLabel(node, label)
       handle && setHandle(node, handle)
+      rotation && setRotation(node, rotation)
     })
 
   const onSelectedUpdate = (cb, immediateCallback = true) => {
