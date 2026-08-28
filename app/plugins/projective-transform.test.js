@@ -126,21 +126,37 @@ test('selection action replaces the regular selection overlays', async t => {
   const {page} = t.context
   await page.click(target)
 
-  const action = await page.evaluate(async () => {
+  await page.evaluate(async () => {
     const menu = document.querySelector('visbug-handles').$shadow
       .querySelector('visbug-selection-actions')
     const shadow = menu.$shadow
     shadow.querySelector('.trigger').click()
     await new Promise(resolve => requestAnimationFrame(resolve))
     const button = shadow.querySelector('[data-command="3d-transform"]')
-    const bounds = button.getBoundingClientRect()
-    return {x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2}
-  })
 
-  await page.mouse.move(action.x, action.y)
-  await page.mouse.down()
-  await new Promise(resolve => setTimeout(resolve, 75))
-  await page.mouse.up()
+    const pointerId = 42
+    button.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true,
+      composed: true,
+      button: 0,
+      pointerId,
+    }))
+
+    // Complete the activation away from the now-hidden menu. This reproduces
+    // the browser event sequence without relying on native popover coordinates.
+    document.body.dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true,
+      composed: true,
+      button: 0,
+      pointerId,
+    }))
+    document.body.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      composed: true,
+      detail: 1,
+    }))
+    await new Promise(resolve => setTimeout(resolve))
+  })
   await page.waitForSelector('visbug-projective-transform')
 
   t.is(await page.$$('visbug-projective-transform').then(items => items.length), 1)
