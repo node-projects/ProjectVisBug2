@@ -86,6 +86,7 @@ export const isOffBounds = node =>
     || node.closest('visbug-ally')
     || node.closest('visbug-label')
     || node.closest('visbug-handles')
+    || node.closest('visbug-selection-actions')
     || node.closest('visbug-corners')
     || node.closest('visbug-grip')
     || node.closest('visbug-gridlines')

@@ -29,6 +29,8 @@ export function Selectable(visbug, history) {
   let labels              = []
   let handles             = []
   let rotations           = []
+  let selectionActionPointerDown = false
+  let selectionActionPointerTimer
 
   const hover_state       = {
     target:   null,
@@ -37,6 +39,7 @@ export function Selectable(visbug, history) {
   }
 
   const listen = () => {
+    page.addEventListener('pointerdown', on_pointerdown, true)
     page.addEventListener('click', on_click, true)
     page.addEventListener('dblclick', on_dblclick, true)
     page.addEventListener('transitionrun', on_transition_run, true)
@@ -65,6 +68,8 @@ export function Selectable(visbug, history) {
   }
 
   const unlisten = () => {
+    clearTimeout(selectionActionPointerTimer)
+    page.removeEventListener('pointerdown', on_pointerdown, true)
     page.removeEventListener('click', on_click, true)
     page.removeEventListener('dblclick', on_dblclick, true)
     page.removeEventListener('transitionrun', on_transition_run, true)
@@ -81,7 +86,27 @@ export function Selectable(visbug, history) {
     hotkeys.unbind(`esc,${metaKey}+d,backspace,delete,alt+del,alt+backspace,${metaKey}+e,${metaKey}+shift+e,${metaKey}+g,${metaKey}+shift+g,tab,shift+tab,enter,shift+enter`)
   }
 
+  const on_pointerdown = () => {
+    selectionActionPointerDown = handles.some(handle => handle.actionsOpen)
+    clearTimeout(selectionActionPointerTimer)
+    selectionActionPointerTimer = setTimeout(() => {
+      selectionActionPointerDown = false
+    }, 500)
+  }
+
   const on_click = e => {
+    // Native nested popovers may be light-dismissed between pointerdown and
+    // click. If a selection menu was open, never let that click select the
+    // document content underneath it (this also makes outside-click dismiss
+    // close the menu without changing the selection).
+    if (selectionActionPointerDown || handles.some(handle => handle.actionsOpen)) {
+      selectionActionPointerDown = false
+      clearTimeout(selectionActionPointerTimer)
+      return
+    }
+
+    if (e.composedPath().some(isOffBounds)) return
+
     const $target = deepElementFromPoint(e.clientX, e.clientY)
 
     if (isOffBounds($target) && !selected.filter(el => el == $target).length)
@@ -472,6 +497,11 @@ export function Selectable(visbug, history) {
   }
 
   const on_hover = e => {
+    // Keep the selected element and its top-layer popovers stable while the
+    // pointer travels through an actions menu. Creating/promoting hover UI here
+    // can otherwise close an auto popover before its menu item receives click.
+    if (handles.some(handle => handle.actionsOpen)) return
+
     const $target = deepElementFromPoint(e.clientX, e.clientY)
     const tool = visbug.activeTool
 
@@ -511,6 +541,7 @@ export function Selectable(visbug, history) {
     // force promote into top layer
     if (tool === 'guides') {
       handles.forEach(handle => {
+        if (handle.actionsOpen) return
         handle.hidePopover &&  handle.hidePopover()
         if (handle.isConnected && handle.showPopover) handle.showPopover()
       })

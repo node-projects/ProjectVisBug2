@@ -61,6 +61,41 @@ npm run bundle
 
 The static demo is generated in `app/`.
 
+### Selection-menu plug-ins
+
+Plug-ins can add commands to the selected-element menu. The menu is hidden when
+no active plug-in contributes an action. A parent action without a command
+becomes a submenu:
+
+```js
+const visbug = document.querySelector('vis-bug')
+
+const plugin = visbug.registerPlugin({
+  id: 'copy-example',
+  commands: ['copy-example-json'],
+  execute: ({source, selected, query}) => {
+    // `source` is the element whose menu was used.
+  },
+  selectionActions: [
+    {id: 'copy-example', label: 'Copy as'},
+    {
+      id: 'copy-example-json',
+      parentId: 'copy-example',
+      label: 'JSON',
+      command: 'copy-example-json',
+    },
+  ],
+})
+
+plugin.deactivate()
+plugin.activate()
+plugin.unregister()
+```
+
+Built-in plug-ins can also be toggled with
+`visbug.setPluginActive('export', false)`. The export plug-in is active by
+default.
+
 ### Browser extensions
 
 VisBug2 retains the browser-extension sources from upstream. The currently

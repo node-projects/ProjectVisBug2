@@ -32,7 +32,7 @@
     "extension:release": "npm run test:ci && npm run bump && npm run extension:build && npm run extension:zip",
     "extension:js": "npm run bundle:prod",
     "extension:css": "postcss app/extension.css -o extension/toolbar/bundle.css",
-    "extension:copy": "cp app/bundle.min.js extension/toolbar/ && cp -R app/tuts/ extension/tuts",
+    "extension:copy": "cp app/bundle.min.js extension/toolbar/ && rm -rf extension/toolbar/chunks && cp -R app/chunks extension/toolbar/ && cp -R app/tuts/ extension/tuts",
     "extension:zip": "rm -rf ./extension/build/* && mkdir ./visbug2_v$npm_package_version && cp -R ./extension/* ./visbug2_v$npm_package_version/ && zip -r ./extension/build/visbug2.zip ./visbug2_v$npm_package_version/ && rm -rf ./visbug2_v$npm_package_version",
     "extension:firefox": "npm run dev:extension && cd extension && web-ext run",
     "extension:firefox-build": "npm run extension:build && cd extension && web-ext build",
@@ -42,7 +42,9 @@
     "test:ci": "start-server-and-test http://localhost:3000"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.8",
     "@ctrl/tinycolor": "^4.2.0",
+    "@node-projects/layout2vector": "^5.29.0",
     "blingblingjs": "^2.3.0",
     "colorjs.io": "^0.7.1",
     "construct-style-sheets-polyfill": "^3.1.0",
@@ -51,6 +53,7 @@
     "query-selector-shadow-dom": "^1.0.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-terser": "^1.0.0",
     "ava": "^8.0.1",

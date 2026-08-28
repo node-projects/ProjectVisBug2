@@ -18,34 +18,141 @@ import { commands as detect_overflows_commands, description as detect_overflows_
 import { commands as loop_thru_widths_commands, description as loop_thru_widths_description, default as LoopThruWidths } from './loop-through-widths'
 // import { commands as placeholdifier_commands, description as placeholdifier_description, default as PlaceholdifierPlugin } from './placeholdifier'
 import { commands as expand_text_commands, description as expand_text_description, default as ExpandTextPlugin } from './expand-text'
+import {
+  commands as export_commands,
+  selectionActions as export_selection_actions,
+  default as ExportPlugin
+} from './export'
 
-const commandsToHash = (plugin_commands, plugin_fn) =>
-  plugin_commands.reduce((commands, command) =>
-    Object.assign(commands, { [`/${command}`]: plugin_fn })
-    , {})
+export const PluginRegistry = new Map()
+export const SelectionActionRegistry = new Map()
+export const PluginControllerRegistry = new Map()
 
-export const PluginRegistry = new Map(Object.entries({
-  ...commandsToHash(blank_page_commands, BlankPagePlugin),
-  ...commandsToHash(barrel_roll_commands, BarrelRollPlugin),
+const notifySelectionActionsChanged = () =>
+  document.dispatchEvent(new CustomEvent('visbug-selection-actions-change'))
+
+/**
+ * Register a VisBug plug-in and any actions it contributes to selection menus.
+ * Plug-ins are active by default and can be activated/deactivated at runtime.
+ */
+export const registerPlugin = ({
+  id,
+  commands = [],
+  execute,
+  selectionActions = [],
+  active = true,
+}) => {
+  if (!id) throw new Error('A plug-in id is required')
+  if (PluginControllerRegistry.has(id))
+    throw new Error(`Plug-in already registered: ${id}`)
+  if (commands.length && typeof execute !== 'function')
+    throw new Error(`Plug-in "${id}" needs an execute function`)
+
+  let isActive = false
+
+  const activate = () => {
+    if (isActive) return
+
+    commands.forEach(command => {
+      const query = command.startsWith('/') ? command : `/${command}`
+      if (PluginRegistry.has(query))
+        throw new Error(`Command already registered: ${query}`)
+      PluginRegistry.set(query, execute)
+    })
+
+    selectionActions.forEach(action => {
+      if (SelectionActionRegistry.has(action.id))
+        throw new Error(`Selection action already registered: ${action.id}`)
+      SelectionActionRegistry.set(action.id, {...action, pluginId: id})
+    })
+
+    isActive = true
+    notifySelectionActionsChanged()
+  }
+
+  const deactivate = () => {
+    if (!isActive) return
+
+    commands.forEach(command => {
+      const query = command.startsWith('/') ? command : `/${command}`
+      if (PluginRegistry.get(query) === execute) PluginRegistry.delete(query)
+    })
+
+    selectionActions.forEach(action => {
+      if (SelectionActionRegistry.get(action.id)?.pluginId === id)
+        SelectionActionRegistry.delete(action.id)
+    })
+
+    isActive = false
+    notifySelectionActionsChanged()
+  }
+
+  const controller = {
+    activate,
+    deactivate,
+    unregister() {
+      deactivate()
+      PluginControllerRegistry.delete(id)
+    },
+    get active() { return isActive },
+  }
+
+  PluginControllerRegistry.set(id, controller)
+  active && activate()
+
+  return controller
+}
+
+export const setPluginActive = (id, active) => {
+  const controller = PluginControllerRegistry.get(id)
+  if (!controller) return false
+  active ? controller.activate() : controller.deactivate()
+  return true
+}
+
+export const getSelectionActions = () => {
+  const actions = Array.from(SelectionActionRegistry.values())
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+
+  return actions
+    .filter(action => !action.parentId)
+    .map(action => ({
+      ...action,
+      children: actions.filter(child => child.parentId === action.id),
+    }))
+}
+
+const builtInPlugins = [
+  {id: 'blank-page', commands: blank_page_commands, execute: BlankPagePlugin},
+  {id: 'barrel-roll', commands: barrel_roll_commands, execute: BarrelRollPlugin},
   // ...commandsToHash(pesticide_commands, PesticidePlugin),
   // ...commandsToHash(construct_commands, ConstructPlugin),
   // ...commandsToHash(construct_debug_commands, ConstructDebugPlugin),
   // ...commandsToHash(ct_head_scan_commands, CtHeadScanPlugin),
   // ...commandsToHash(wireframe_commands, WireframePlugin),
   // ...commandsToHash(skeleton_commands, SkeletonPlugin),
-  ...commandsToHash(tag_debugger_commands, TagDebuggerPlugin),
+  {id: 'tag-debugger', commands: tag_debugger_commands, execute: TagDebuggerPlugin},
   // ...commandsToHash(revenge_commands, RevengePlugin),
   // ...commandsToHash(tota11y_commands, Tota11yPlugin),
-  ...commandsToHash(shuffle_commands, ShufflePlugin),
+  {id: 'shuffle', commands: shuffle_commands, execute: ShufflePlugin},
   // ...commandsToHash(colorblind_commands, ColorblindPlugin),
-  ...commandsToHash(zindex_commands, ZIndexPlugin),
+  {id: 'zindex', commands: zindex_commands, execute: ZIndexPlugin},
   // ...commandsToHash(no_mouse_days_commands, NoMouseDays),
-  ...commandsToHash(remove_css_commands, RemoveCSSPlugin),
-  ...commandsToHash(detect_overflows_commands, DetectOverflows),
-  ...commandsToHash(loop_thru_widths_commands, LoopThruWidths),
+  {id: 'remove-css', commands: remove_css_commands, execute: RemoveCSSPlugin},
+  {id: 'detect-overflows', commands: detect_overflows_commands, execute: DetectOverflows},
+  {id: 'loop-through-widths', commands: loop_thru_widths_commands, execute: LoopThruWidths},
   // ...commandsToHash(placeholdifier_commands, PlaceholdifierPlugin),
-  ...commandsToHash(expand_text_commands, ExpandTextPlugin),
-}))
+  {id: 'expand-text', commands: expand_text_commands, execute: ExpandTextPlugin},
+  {
+    id: 'export',
+    commands: export_commands,
+    execute: ExportPlugin,
+    selectionActions: export_selection_actions,
+    active: true,
+  },
+]
+
+builtInPlugins.forEach(registerPlugin)
 
 export const PluginHints = [
   {command: blank_page_commands[0], description: blank_page_description},

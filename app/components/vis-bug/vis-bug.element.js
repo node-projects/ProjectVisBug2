@@ -21,7 +21,11 @@ import {
 import { VisBugModel }            from './model'
 import * as Icons                 from './vis-bug.icons'
 import { provideSelectorEngine }  from '../../features/search'
-import { PluginRegistry }         from '../../plugins/_registry'
+import {
+  PluginRegistry,
+  registerPlugin as registerVisBugPlugin,
+  setPluginActive
+} from '../../plugins/_registry'
 import {
   metaKey,
   isPolyfilledCE,
@@ -304,16 +308,25 @@ export default class VisBug extends HTMLElement {
     }
   }
 
-  execCommand(command) {
+  execCommand(command, context = {}) {
     const query = `/${command}`
 
     if (PluginRegistry.has(query))
       return PluginRegistry.get(query)({
         selected: this.selectorEngine.selection(),
-        query
+        query,
+        ...context,
       })
 
     return Promise.resolve(new Error("Query not found"))
+  }
+
+  registerPlugin(plugin) {
+    return registerVisBugPlugin(plugin)
+  }
+
+  setPluginActive(id, active) {
+    return setPluginActive(id, active)
   }
 
   get activeTool() {

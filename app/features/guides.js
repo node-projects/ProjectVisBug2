@@ -31,6 +31,9 @@ export function Guides(visbug) {
 }
 
 const on_hover = e => {
+  if (Array.from(document.querySelectorAll('visbug-handles'))
+    .some(handle => handle.actionsOpen)) return
+
   const target = deepElementFromPoint(e.clientX, e.clientY)
   if (isOffBounds(target)) return
   showGridlines(target)

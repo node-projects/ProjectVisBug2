@@ -46,6 +46,9 @@ export class Handles extends HTMLElement {
     this.source_el = el
     this.$shadow.innerHTML = this.render(getBoxQuad(el), node_label_id, isFixed(el))
 
+    const actions = this.$shadow.querySelector('visbug-selection-actions')
+    if (actions) actions.source = el
+
     if (this._backdrop) {
       this.backdrop = {
         element: this._backdrop.update(el),
@@ -62,6 +65,11 @@ export class Handles extends HTMLElement {
     cur_child
       ? this.$shadow.replaceChild(bd.element, cur_child)
       : this.$shadow.appendChild(bd.element)
+  }
+
+  get actionsOpen() {
+    return Boolean(
+      this.$shadow.querySelector('visbug-selection-actions')?.open)
   }
 
   /**
@@ -107,6 +115,8 @@ export class Handles extends HTMLElement {
           style="left:${point.x - left}px;top:${point.y - top}px"
           placement="${placement}"
         ></visbug-handle>`).join('')}
+      <visbug-selection-actions ${top < 32 ? 'placement="below"' : ''}>
+      </visbug-selection-actions>
     `
   }
 }

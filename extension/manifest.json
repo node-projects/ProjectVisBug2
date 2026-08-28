@@ -23,7 +23,8 @@
   "web_accessible_resources": [{
     "resources": [
       "tuts/*.gif",
-      "toolbar/*"
+      "toolbar/*",
+      "toolbar/chunks/*"
     ],
     "matches": ["<all_urls>"]
   }],

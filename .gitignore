@@ -4,8 +4,10 @@ node_modules/
 app/bundle.js
 app/bundle.min.js
 app/bundle.css
+app/chunks/
 extension/toolbar/bundle.min.js
 extension/toolbar/bundle.css
+extension/toolbar/chunks/
 extension/build
 extension/tuts
 VisBug/VisBug.xcodeproj/project.xcworkspace/xcuserdata/argyle.xcuserdatad/UserInterfaceState.xcuserstate
