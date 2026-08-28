@@ -3,6 +3,7 @@ import hotkeys from 'hotkeys-js'
 import { TinyColor } from '@ctrl/tinycolor'
 
 import { metaKey, getStyle, showHideSelected } from '../utilities/'
+import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
   .split(',')
@@ -18,7 +19,7 @@ const state = {
   elements: [],
 }
 
-export function HueShift({Color:ColorTool, Visbug}) {
+export function HueShift({Color:ColorTool, Visbug, history}) {
   state.active_color   = ColorTool.getActive()
   state.elements       = []
 
@@ -35,17 +36,21 @@ export function HueShift({Color:ColorTool, Visbug}) {
     let selectedNodes = state.elements
       , keys = handler.key.split('+')
 
-    keys.includes('left') || keys.includes('right')
-      ? changeHue(selectedNodes, keys, 's', ColorTool)
-      : changeHue(selectedNodes, keys, 'l', ColorTool)
+    const prop = keys.includes('left') || keys.includes('right') ? 's' : 'l'
+    recordStyleChanges({history, elements: selectedNodes,
+      properties: ['color', 'backgroundColor', 'border', 'borderColor', 'stroke', 'fill', 'outline'],
+      mergeKey: `hue:${handler.key}:${state.active_color}`,
+      update: () => changeHue(selectedNodes, keys, prop, ColorTool)})
   })
 
   hotkeys(command_events, (e, handler) => {
     e.preventDefault()
     let keys = handler.key.split('+')
-    keys.includes('left') || keys.includes('right')
-      ? changeHue(state.elements, keys, 'a', ColorTool)
-      : changeHue(state.elements, keys, 'h', ColorTool)
+    const prop = keys.includes('left') || keys.includes('right') ? 'a' : 'h'
+    recordStyleChanges({history, elements: state.elements,
+      properties: ['color', 'backgroundColor', 'border', 'borderColor', 'stroke', 'fill', 'outline'],
+      mergeKey: `hue:${handler.key}:${state.active_color}`,
+      update: () => changeHue(state.elements, keys, prop, ColorTool)})
   })
 
   hotkeys(']', (e, handler) => {

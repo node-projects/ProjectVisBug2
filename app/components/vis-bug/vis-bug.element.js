@@ -9,7 +9,7 @@ import {
 import {
   Selectable, Moveable, Padding, Margin, EditText, Font,
   Flex, Search, ColorPicker, BoxShadow, HueShift, MetaTip,
-  Guides, Screenshot, Position, Accessibility, draggable
+  Guides, Screenshot, Position, Accessibility, draggable, HistoryManager
 } from '../../features/'
 
 import {
@@ -47,11 +47,12 @@ export default class VisBug extends HTMLElement {
 
   connectedCallback() {
     this._tutsBaseURL = this.getAttribute('tutsBaseURL') || 'tuts'
+    this.history = new HistoryManager()
 
     this.setup()
 
-    this.selectorEngine = Selectable(this)
-    this.colorPicker    = ColorPicker(this.$shadow, this.selectorEngine)
+    this.selectorEngine = Selectable(this, this.history)
+    this.colorPicker    = ColorPicker(this.$shadow, this.selectorEngine, this.history)
 
     provideSelectorEngine(this.selectorEngine)
 
@@ -66,6 +67,8 @@ export default class VisBug extends HTMLElement {
       Object.keys(this.toolbar_model).reduce((events, key) =>
         events += ',' + key, ''))
     hotkeys.unbind(`${metaKey}+/`)
+    hotkeys.unbind(`${metaKey}+z,${metaKey}+shift+z,${metaKey}+y`)
+    this.history.clear()
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -120,6 +123,19 @@ export default class VisBug extends HTMLElement {
         )
       })
     )
+
+    const isEditing = target => target?.isContentEditable
+      || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)
+
+    hotkeys(`${metaKey}+z`, e => {
+      if (isEditing(e.target)) return
+      if (this.history.undo()) e.preventDefault()
+    })
+
+    hotkeys(`${metaKey}+shift+z,${metaKey}+y`, e => {
+      if (isEditing(e.target)) return
+      if (this.history.redo()) e.preventDefault()
+    })
 
     hotkeys(`${metaKey}+/,${metaKey}+.`, e =>
       this.$shadow.host.style.display =
@@ -206,29 +222,30 @@ export default class VisBug extends HTMLElement {
   }
 
   move() {
-    this.deactivate_feature = Moveable(this.selectorEngine)
+    this.deactivate_feature = Moveable(this.selectorEngine, this.history)
   }
 
   margin() {
-    this.deactivate_feature = Margin(this.selectorEngine)
+    this.deactivate_feature = Margin(this.selectorEngine, this.history)
   }
 
   padding() {
-    this.deactivate_feature = Padding(this.selectorEngine)
+    this.deactivate_feature = Padding(this.selectorEngine, this.history)
   }
 
   font() {
-    this.deactivate_feature = Font(this.selectorEngine)
+    this.deactivate_feature = Font(this.selectorEngine, this.history)
   }
 
   text() {
-    this.selectorEngine.onSelectedUpdate(EditText)
+    const editText = elements => EditText(elements, this.history)
+    this.selectorEngine.onSelectedUpdate(editText)
     this.deactivate_feature = () =>
-      this.selectorEngine.removeSelectedCallback(EditText)
+      this.selectorEngine.removeSelectedCallback(editText)
   }
 
   align() {
-    this.deactivate_feature = Flex(this.selectorEngine)
+    this.deactivate_feature = Flex(this.selectorEngine, this.history)
   }
 
   search() {
@@ -236,13 +253,14 @@ export default class VisBug extends HTMLElement {
   }
 
   boxshadow() {
-    this.deactivate_feature = BoxShadow(this.selectorEngine)
+    this.deactivate_feature = BoxShadow(this.selectorEngine, this.history)
   }
 
   hueshift() {
     this.deactivate_feature = HueShift({
       Color:  this.colorPicker,
       Visbug: this.selectorEngine,
+      history: this.history,
     })
   }
 
@@ -263,7 +281,7 @@ export default class VisBug extends HTMLElement {
   }
 
   position() {
-    let feature = Position()
+    let feature = Position(this.history)
     this.selectorEngine.onSelectedUpdate(feature.onNodesSelected)
     this.deactivate_feature = () => {
       this.selectorEngine.removeSelectedCallback(feature.onNodesSelected)

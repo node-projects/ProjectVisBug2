@@ -1,6 +1,7 @@
 import $ from 'blingblingjs'
 import hotkeys from 'hotkeys-js'
 import { metaKey, getStyle, getSide, showHideSelected } from '../utilities/'
+import { AttributeChange, BatchChange, StyleChange, recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
   .split(',')
@@ -11,7 +12,7 @@ const key_events = 'up,down,left,right'
 
 const command_events = `${metaKey}+up,${metaKey}+shift+up,${metaKey}+down,${metaKey}+shift+down`
 
-export function Position() {
+export function Position(history) {
   const state = {
     elements: []
   }
@@ -20,7 +21,22 @@ export function Position() {
     if (e.cancelBubble) return
 
     e.preventDefault()
-    positionElement(state.elements, handler.key)
+    const elements = state.elements
+    const html = elements.filter(el => !(el instanceof SVGElement))
+    const svg = elements.filter(el => el instanceof SVGElement)
+    recordStyleChanges({history, elements: html, properties: ['position', 'top', 'left'],
+      mergeKey: `position:${handler.key}`, update: () => positionElement(html, handler.key)})
+    if (svg.length) {
+      const before = svg.map(el => el.getAttribute('transform'))
+      positionElement(svg, handler.key)
+      history?.push(new BatchChange(svg.map((element, index) => new AttributeChange({
+        element,
+        attribute: 'transform',
+        oldValue: before[index],
+        newValue: element.getAttribute('transform'),
+        mergeKey: `position:${handler.key}`,
+      })), {mergeKey: `position:${handler.key}`}))
+    }
   })
 
   const onNodesSelected = els => {
@@ -28,7 +44,7 @@ export function Position() {
       el.teardown())
 
     state.elements = els.map(el =>
-      draggable({el}))
+      draggable({el, history}))
   }
 
   const disconnect = () => {
@@ -43,7 +59,7 @@ export function Position() {
   }
 }
 
-export function draggable({el, surface = el, cursor = 'move', clickEvent}) {
+export function draggable({el, surface = el, cursor = 'move', clickEvent, history}) {
    const state = {
     target: el,
     surface,
@@ -81,6 +97,9 @@ export function draggable({el, surface = el, cursor = 'move', clickEvent}) {
     if(e.target !== state.surface) return
     e.preventDefault()
 
+    state.original = el instanceof SVGElement
+      ? {transform: el.getAttribute('transform')}
+      : {position: el.style.position, left: el.style.left, top: el.style.top}
     if(getComputedStyle(el).position == 'static')
       el.style.position = 'relative'
     el.style.willChange = 'top,left'
@@ -132,6 +151,17 @@ export function draggable({el, surface = el, cursor = 'move', clickEvent}) {
 
     const treatAsClick = !state.travelDistance || state.travelDistance < 5
     if (clickEvent && treatAsClick) clickEvent(e);
+    if (history) {
+      const change = el instanceof SVGElement
+        ? new AttributeChange({element: el, attribute: 'transform',
+          oldValue: state.original.transform, newValue: el.getAttribute('transform')})
+        : new BatchChange([
+          new StyleChange({element: el, property: 'position', oldValue: state.original.position, newValue: el.style.position}),
+          new StyleChange({element: el, property: 'left', oldValue: state.original.left, newValue: el.style.left}),
+          new StyleChange({element: el, property: 'top', oldValue: state.original.top, newValue: el.style.top}),
+        ])
+      history.push(change)
+    }
     state.travelDistance = 0 // reset after
   }
 

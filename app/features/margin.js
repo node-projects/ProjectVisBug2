@@ -1,5 +1,6 @@
 import hotkeys from 'hotkeys-js'
 import { metaKey, getStyle, getSide, showHideSelected } from '../utilities/'
+import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
   .split(',')
@@ -10,17 +11,17 @@ const key_events = 'up,down,left,right'
 
 const command_events = `${metaKey}+up,${metaKey}+shift+up,${metaKey}+down,${metaKey}+shift+down`
 
-export function Margin(visbug) {
+export function Margin(visbug, history) {
   hotkeys(key_events, (e, handler) => {
     if (e.cancelBubble) return
 
     e.preventDefault()
-    pushElement(visbug.selection(), handler.key)
+    pushElement(visbug.selection(), handler.key, history)
   })
 
   hotkeys(command_events, (e, handler) => {
     e.preventDefault()
-    pushAllElementSides(visbug.selection(), handler.key)
+    pushAllElementSides(visbug.selection(), handler.key, history)
   })
 
   visbug.onSelectedUpdate(paintBackgrounds)
@@ -34,8 +35,7 @@ export function Margin(visbug) {
   }
 }
 
-export function pushElement(els, direction) {
-  els
+const updateMargin = (els, direction) => els
     .map(el => showHideSelected(el))
     .map(el => ({
       el,
@@ -52,17 +52,33 @@ export function pushElement(els, direction) {
       }))
     .forEach(({el, style, margin}) =>
       el.style[style] = `${margin < 0 ? 0 : margin}px`)
+
+export function pushElement(els, direction, history) {
+  const style = 'margin' + getSide(direction)
+  recordStyleChanges({
+    history,
+    elements: els,
+    properties: [style],
+    mergeKey: `margin:${direction}`,
+    update: () => updateMargin(els, direction),
+  })
 }
 
-export function pushAllElementSides(els, keycommand) {
+export function pushAllElementSides(els, keycommand, history) {
   const combo = keycommand.split('+')
   let spoof = ''
 
   if (combo.includes('shift'))  spoof = 'shift+' + spoof
   if (combo.includes('down'))   spoof = 'alt+' + spoof
 
-  'up,down,left,right'.split(',')
-    .forEach(side => pushElement(els, spoof + side))
+  const directions = 'up,down,left,right'.split(',').map(side => spoof + side)
+  recordStyleChanges({
+    history,
+    elements: els,
+    properties: directions.map(direction => 'margin' + getSide(direction)),
+    mergeKey: `margin:all:${keycommand}`,
+    update: () => directions.forEach(direction => updateMargin(els, direction)),
+  })
 }
 
 function paintBackgrounds(els) {

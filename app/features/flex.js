@@ -1,5 +1,6 @@
 import hotkeys from 'hotkeys-js'
 import { metaKey, getStyle } from '../utilities/'
+import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
   .split(',')
@@ -10,7 +11,7 @@ const key_events = 'up,down,left,right'
 
 const command_events = `${metaKey}+up,${metaKey}+down,${metaKey}+left,${metaKey}+right,${metaKey}+shift+up,${metaKey}+shift+down,${metaKey}+shift+left,${metaKey}+shift+right`
 
-export function Flex({selection}) {
+export function Flex({selection}, history) {
   hotkeys(key_events, (e, handler) => {
     if (e.cancelBubble) return
 
@@ -19,14 +20,13 @@ export function Flex({selection}) {
     let selectedNodes = selection()
       , keys = handler.key.split('+')
 
-    if (keys.includes('left') || keys.includes('right'))
-      keys.includes('shift')
-        ? changeHDistribution(selectedNodes, handler.key)
-        : changeHAlignment(selectedNodes, handler.key)
-    else
-      keys.includes('shift')
-        ? changeVDistribution(selectedNodes, handler.key)
-        : changeVAlignment(selectedNodes, handler.key)
+    const action = keys.includes('left') || keys.includes('right')
+      ? keys.includes('shift') ? changeHDistribution : changeHAlignment
+      : keys.includes('shift') ? changeVDistribution : changeVAlignment
+    const property = action === changeHDistribution || action === changeHAlignment
+      ? 'justifyContent' : action === changeVDistribution ? 'alignContent' : 'alignItems'
+    recordStyleChanges({history, elements: selectedNodes, properties: ['display', property],
+      mergeKey: `flex:${handler.key}`, update: () => action(selectedNodes, handler.key)})
   })
 
   hotkeys(command_events, (e, handler) => {
@@ -35,14 +35,13 @@ export function Flex({selection}) {
     let selectedNodes = selection()
       , keys = handler.key.split('+')
 
-    if (keys.includes('left') || keys.includes('right'))
-      keys.includes('shift')
-        ? changeOrder(selectedNodes, handler.key)
-        : changeDirection(selectedNodes, 'row')
-    else
-      keys.includes('shift')
-        ? changeWrap(selectedNodes, handler.key)
-        : changeDirection(selectedNodes, 'column')
+    const action = keys.includes('shift') ? keys.includes('left') || keys.includes('right')
+      ? changeOrder : changeWrap : changeDirection
+    const property = action === changeWrap ? 'flexWrap' : 'flexDirection'
+    const value = keys.includes('left') || keys.includes('right') ? 'row' : 'column'
+    recordStyleChanges({history, elements: selectedNodes, properties: ['display', property],
+      mergeKey: `flex:${handler.key}`,
+      update: () => action(selectedNodes, action === changeDirection ? value : handler.key)})
   })
 
   return () => {

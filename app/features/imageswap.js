@@ -1,5 +1,6 @@
 import $ from 'blingblingjs'
 import { getStyle } from '../utilities/'
+import { AttributeChange, BatchChange, StyleChange } from './history'
 
 let imgs      = []
   , overlays  = []
@@ -109,11 +110,29 @@ const onDrop = async e => {
     const targetImages   = getTargetContentImages(selectedImages, e)
 
     if (targetImages.length) {
+      const before = targetImages.flatMap(captureContentImage)
       updateContentImages(targetImages, srcs)
+      document.querySelector('vis-bug')?.history?.push(new BatchChange(
+        before.map(item => new AttributeChange({
+          ...item,
+          newValue: item.element.getAttribute(item.attribute),
+        })).filter(change => change.oldValue !== change.newValue)
+      ))
     }
     else {
       const bgImages = getTargetBackgroundImages(imgs, e)
+      const before = bgImages.map(element => ({
+        element,
+        oldValue: element.lastBackgroundImageInline ?? element.style.backgroundImage,
+      }))
       updateBackgroundImages(bgImages, srcs[0])
+      document.querySelector('vis-bug')?.history?.push(new BatchChange(
+        before.map(item => new StyleChange({
+          ...item,
+          property: 'backgroundImage',
+          newValue: item.element.style.backgroundImage,
+        })).filter(change => change.oldValue !== change.newValue)
+      ))
     }
   }
 
@@ -156,6 +175,39 @@ const updateContentImage = (img, src) => {
     sources.forEach(source =>
       source.srcset = src)
 }
+
+const captureContentImage = image => [
+  {
+    element: image,
+    attribute: 'src',
+    oldValue: image.lastSrcAttr !== undefined
+      ? image.lastSrcAttr
+      : image.getAttribute('src'),
+  },
+  {
+    element: image,
+    attribute: 'srcset',
+    oldValue: image.lastSrcsetAttr !== undefined
+      ? image.lastSrcsetAttr
+      : image.getAttribute('srcset'),
+  },
+  ...getPictureSourcesToUpdate(image).flatMap(source => [
+    {
+      element: source,
+      attribute: 'src',
+      oldValue: source.lastSrcAttr !== undefined
+        ? source.lastSrcAttr
+        : source.getAttribute('src'),
+    },
+    {
+      element: source,
+      attribute: 'srcset',
+      oldValue: source.lastSrcsetAttr !== undefined
+        ? source.lastSrcsetAttr
+        : source.getAttribute('srcset'),
+    },
+  ]),
+]
 
 const getTargetBackgroundImages = (images, e) =>
   images.filter(img =>
@@ -216,6 +268,7 @@ const previewDrop = async (node) => {
     const setSrc = dragItem.currentSrc
     if (window.getComputedStyle(node).backgroundImage !== 'none'){
       node.lastBackgroundImage = window.getComputedStyle(node).backgroundImage
+      node.lastBackgroundImageInline = node.style.backgroundImage
       node.style.backgroundImage = `url(${setSrc})`
     }else{
       cacheImageState(node)
@@ -227,6 +280,8 @@ const previewDrop = async (node) => {
 const cacheImageState = image => {
   image.lastSrc    = image.src
   image.lastSrcset = image.srcset
+  image.lastSrcAttr = image.getAttribute('src')
+  image.lastSrcsetAttr = image.getAttribute('srcset')
 
   const sibSource  = getPictureSourcesToUpdate(image)
 
@@ -234,6 +289,8 @@ const cacheImageState = image => {
     sibSource.forEach(sib => {
       sib.lastSrcset = sib.srcset
       sib.lastSrc = sib.src
+      sib.lastSrcAttr = sib.getAttribute('src')
+      sib.lastSrcsetAttr = sib.getAttribute('srcset')
     })
   }
 }
@@ -255,7 +312,7 @@ const resetPreviewed = node => {
     })
 
   if (node.lastBackgroundImage)
-    node.style.backgroundImage = node.lastBackgroundImage
+    node.style.backgroundImage = node.lastBackgroundImageInline
 
   clearDragHistory(node)
 }
@@ -263,6 +320,8 @@ const resetPreviewed = node => {
 const clearDragHistory = node => {
   ['lastSrc','lastSrcset','lastBackgroundImage'].forEach(prop =>
     node[prop] = null)
+  ;['lastSrcAttr','lastSrcsetAttr','lastBackgroundImageInline'].forEach(prop =>
+    delete node[prop])
 
   const sources = getPictureSourcesToUpdate(node)
 
@@ -270,6 +329,8 @@ const clearDragHistory = node => {
     sources.forEach(source => {
       source.lastSrcset = null
       source.lastSrc = null
+      delete source.lastSrcAttr
+      delete source.lastSrcsetAttr
     })
   }
 }

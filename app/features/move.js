@@ -2,6 +2,7 @@ import $ from 'blingblingjs'
 import hotkeys from 'hotkeys-js'
 import { getNodeIndex, showEdge, swapElements, notList } from '../utilities/'
 import { toggleWatching } from './imageswap'
+import { BatchChange, DOMChange, domPosition } from './history'
 
 const key_events = 'up,down,left,right'
 const state = {
@@ -19,25 +20,37 @@ const state = {
 }
 // todo: indicator for when node can descend
 // todo: have it work with shadowDOM
-export function Moveable(visbug) {
+export function Moveable(visbug, history) {
   hotkeys(key_events, (e, {key}) => {
     if (e.cancelBubble) return
 
     e.preventDefault()
     e.stopPropagation()
 
-    visbug.selection().forEach(el => {
+    const elements = visbug.selection()
+    const before = elements.map(domPosition)
+    elements.forEach(el => {
       moveElement(el, key)
       updateFeedback(el)
     })
+    const changes = elements
+      .map((element, index) => new DOMChange({
+        element,
+        oldPosition: before[index],
+        newPosition: domPosition(element),
+      }))
+      .filter((change, index) => change.oldPosition.parent !== change.newPosition.parent
+        || change.oldPosition.index !== change.newPosition.index)
+    history?.push(new BatchChange(changes, {mergeKey: `move:${key}`}))
   })
 
-  visbug.onSelectedUpdate(dragNDrop)
+  const enableDragNDrop = selection => dragNDrop(selection, history)
+  visbug.onSelectedUpdate(enableDragNDrop)
   toggleWatching({watch: false})
 
   return () => {
     toggleWatching({watch: true})
-    visbug.removeSelectedCallback(dragNDrop)
+    visbug.removeSelectedCallback(enableDragNDrop)
     clearListeners()
     hotkeys.unbind(key_events)
   }
@@ -90,7 +103,7 @@ export const popOut = ({el, under = false}) =>
         ? getNodeIndex(el) + 1
         : getNodeIndex(el)])
 
-export function dragNDrop(selection) {
+export function dragNDrop(selection, history) {
   if (!selection.length)
     return
 
@@ -152,6 +165,8 @@ const dragStart = ({target}) => {
     return
 
   state.drag.src = target
+  state.drag.start = domPosition(target)
+  state.drag.history = history
   state.hover.dropzones.push(createDropzoneUI(target))
   state.drag.siblings.get(target).style.opacity = 0.01
 
@@ -182,16 +197,26 @@ const dragOver = e => {
 const dragDrop = e => {
   if (!state.drag.src) return
 
-  state.drag.src.removeAttribute('visbug-drag-src')
-  ghostBuster(state.drag.src)
+  const source = state.drag.src
+  source.removeAttribute('visbug-drag-src')
+  ghostBuster(source)
 
-  if (state.drag.siblings.has(state.drag.src))
-    state.drag.siblings.get(state.drag.src).style.opacity = null
+  if (state.drag.siblings.has(source))
+    state.drag.siblings.get(source).style.opacity = null
 
   state.hover.dropzones.forEach(zone =>
     zone.remove())
 
+  const end = domPosition(source)
+  if (state.drag.start && (state.drag.start.parent !== end.parent || state.drag.start.index !== end.index))
+    state.drag.history?.push(new DOMChange({
+      element: source,
+      oldPosition: state.drag.start,
+      newPosition: end,
+    }))
+
   state.drag.src = null
+  state.drag.start = null
 }
 
 const siblingHoverIn = ({target}) => {

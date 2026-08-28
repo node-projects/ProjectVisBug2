@@ -8,6 +8,9 @@ import { queryPage } from './search'
 import { createMeasurements, clearMeasurements } from './measurements'
 import { createMarginVisual } from './margin'
 import { createPaddingVisual } from './padding'
+import {
+  AttributeChange, BatchChange, DOMChange, domPosition
+} from './history'
 
 import { showTip as showMetaTip, removeAll as removeAllMetaTips } from './metatip'
 import { showTip as showAccessibilityTip, removeAll as removeAllAccessibilityTips } from './accessibility'
@@ -19,7 +22,7 @@ import {
   getTextShadowValues, isFixed, onRemove
 } from '../utilities/'
 
-export function Selectable(visbug) {
+export function Selectable(visbug, history) {
   const page              = document.body
   let selected            = []
   let selectedCallbacks   = []
@@ -36,6 +39,9 @@ export function Selectable(visbug) {
   const listen = () => {
     page.addEventListener('click', on_click, true)
     page.addEventListener('dblclick', on_dblclick, true)
+    page.addEventListener('transitionrun', on_transition_run, true)
+    page.addEventListener('transitionend', on_transition_end, true)
+    page.addEventListener('transitioncancel', on_transition_end, true)
 
     page.on('selectstart', on_selection)
     page.on('mousemove', on_hover)
@@ -61,6 +67,9 @@ export function Selectable(visbug) {
   const unlisten = () => {
     page.removeEventListener('click', on_click, true)
     page.removeEventListener('dblclick', on_dblclick, true)
+    page.removeEventListener('transitionrun', on_transition_run, true)
+    page.removeEventListener('transitionend', on_transition_end, true)
+    page.removeEventListener('transitioncancel', on_transition_end, true)
 
     page.off('selectstart', on_selection)
     page.off('mousemove', on_hover)
@@ -153,17 +162,51 @@ export function Selectable(visbug) {
     if (!root_node) return
 
     const deep_clone = root_node.cloneNode(true)
-    deep_clone.removeAttribute('data-selected')
+    ;[deep_clone, ...deep_clone.querySelectorAll('*')].forEach(node => [
+      'data-selected', 'data-selected-hide', 'data-label-id',
+      'data-pseudo-select', 'data-measuring', 'data-outward'
+    ].forEach(attribute => node.removeAttribute(attribute)))
     root_node.parentNode.insertBefore(deep_clone, root_node.nextSibling)
+    history?.push(new DOMChange({
+      element: deep_clone,
+      oldPosition: null,
+      newPosition: domPosition(deep_clone),
+    }))
     e.preventDefault()
   }
 
-  const on_delete = e =>
-    selected.length && delete_all()
+  const on_delete = e => {
+    if (!selected.length) return
+    e.preventDefault()
 
-  const on_clearstyles = e =>
-    selected.forEach(el =>
-      el.attr('style', null))
+    const elements = [...selected]
+    const positions = elements.map(domPosition)
+    delete_all()
+    elements.forEach(el => $(el).attr({
+      'data-selected': null,
+      'data-selected-hide': null,
+      'data-label-id': null,
+      'data-pseudo-select': null,
+      'data-outward': null,
+    }))
+    history?.push(new BatchChange(elements.map((element, index) =>
+      new DOMChange({
+        element,
+        oldPosition: positions[index],
+        newPosition: null,
+      }))))
+  }
+
+  const on_clearstyles = e => {
+    const changes = selected.map(element => new AttributeChange({
+      element,
+      attribute: 'style',
+      oldValue: element.getAttribute('style'),
+      newValue: null,
+    })).filter(change => change.oldValue !== null)
+    selected.forEach(el => el.attr('style', null))
+    history?.push(new BatchChange(changes))
+  }
 
   const on_copy = async e => {
     // if user has selected text, dont try to copy an element
@@ -191,7 +234,10 @@ export function Selectable(visbug) {
       $node.removeAttribute('data-selected')
       window.copy_backup = $node.outerHTML
       e.clipboardData.setData('text/html', window.copy_backup)
-      selected[0].remove()
+      const element = selected[0]
+      const oldPosition = domPosition(element)
+      element.remove()
+      history?.push(new DOMChange({element, oldPosition, newPosition: null}))
     }
   }
 
@@ -203,9 +249,12 @@ export function Selectable(visbug) {
     if (selected.length && potentialHTML) {
       e.preventDefault()
 
-      selected.forEach(el =>
-        el.appendChild(
-          htmlStringToDom(potentialHTML)))
+      const changes = selected.map(el => {
+        const element = htmlStringToDom(potentialHTML)
+        el.appendChild(element)
+        return new DOMChange({element, oldPosition: null, newPosition: domPosition(element)})
+      })
+      history?.push(new BatchChange(changes))
     }
   }
 
@@ -249,6 +298,7 @@ export function Selectable(visbug) {
   }
 
   const on_paste_styles = async (e, index = 0) => {
+    const oldStyles = selected.map(el => el.getAttribute('style'))
     if (window.copied_styles) {
       selected.forEach(el => {
         window.copied_styles[index]
@@ -267,6 +317,16 @@ export function Selectable(visbug) {
         selected.forEach(el =>
           el.style = potentialStyles)
     }
+
+    const changes = selected
+      .map((element, i) => new AttributeChange({
+        element,
+        attribute: 'style',
+        oldValue: oldStyles[i],
+        newValue: element.getAttribute('style'),
+      }))
+      .filter(change => change.oldValue !== change.newValue)
+    history?.push(new BatchChange(changes))
   }
 
   const on_expand_selection = (e, {key}) => {
@@ -290,25 +350,49 @@ export function Selectable(visbug) {
     if (key.split('+').includes('shift')) {
       let $selected = [...selected]
       unselect_all()
+      const changes = []
       $selected.reverse().forEach(el => {
-        let l = el.children.length
-        while (el.children.length > 0) {
-          var node = el.childNodes[el.children.length - 1]
+        const children = Array.from(el.childNodes)
+        const childPositions = children.map(domPosition)
+        const containerPosition = domPosition(el)
+        while (el.childNodes.length > 0) {
+          var node = el.lastChild
           if (node.nodeName !== '#text')
             select(node)
           el.parentNode.prepend(node)
         }
         el.parentNode.removeChild(el)
+        children.forEach((child, index) => changes.push(new DOMChange({
+          element: child,
+          oldPosition: childPositions[index],
+          newPosition: domPosition(child),
+        })))
+        changes.push(new DOMChange({
+          element: el,
+          oldPosition: containerPosition,
+          newPosition: null,
+        }))
       })
+      history?.push(new BatchChange(changes))
     }
     else {
       let div = document.createElement('div')
+      const elements = [...selected]
+      const oldPositions = elements.map(domPosition)
       selected[0].parentNode.prepend(
         selected.reverse().reduce((div, el) => {
           div.appendChild(el)
           return div
         }, div)
       )
+      history?.push(new BatchChange([
+        new DOMChange({element: div, oldPosition: null, newPosition: domPosition(div)}),
+        ...elements.map((element, index) => new DOMChange({
+          element,
+          oldPosition: oldPositions[index],
+          newPosition: domPosition(element),
+        }))
+      ]))
       unselect_all()
       select(div)
     }
@@ -755,7 +839,79 @@ export function Selectable(visbug) {
   const tellWatchers = () =>
     selectedCallbacks.forEach(cb => cb(selected))
 
+  let refreshFrame
+  const refreshOverlays = () => {
+    refreshFrame = null
+    clearMeasurements()
+
+    selected = selected.filter(el => el.isConnected)
+    selected.forEach(el => {
+      const id = Number(el.getAttribute('data-label-id'))
+      const handle = handles[id]
+      const label = labels[id]
+      const rotation = rotations[id]
+      handle && setHandle(el, handle)
+      label && setLabel(el, label)
+      rotation && setRotation(el, rotation)
+    })
+
+    if (hover_state.target?.isConnected) {
+      hover_state.element && (hover_state.element.position = {el: hover_state.target})
+      hover_state.label && (hover_state.label.position = {
+        boundingRect: hover_state.target.getBoundingClientRect(),
+        isFixed: isFixed(hover_state.target),
+      })
+    }
+    else clearHover()
+  }
+
+  const stopHistoryRefresh = history?.subscribe(() => {
+    if (refreshFrame) cancelAnimationFrame(refreshFrame)
+    refreshOverlays()
+    refreshFrame = requestAnimationFrame(() => {
+      refreshOverlays()
+      refreshFrame = requestAnimationFrame(refreshOverlays)
+    })
+  })
+
+  const transitioning = new Map()
+  let transitionFrame
+
+  const refreshTransition = () => {
+    refreshOverlays()
+    transitionFrame = transitioning.size
+      ? requestAnimationFrame(refreshTransition)
+      : null
+  }
+
+  const on_transition_run = e => {
+    if (!selected.includes(e.target)) return
+
+    const properties = transitioning.get(e.target) || new Set()
+    properties.add(e.propertyName)
+    transitioning.set(e.target, properties)
+    if (!transitionFrame)
+      transitionFrame = requestAnimationFrame(refreshTransition)
+  }
+
+  const on_transition_end = e => {
+    const properties = transitioning.get(e.target)
+    if (!properties) return
+
+    properties.delete(e.propertyName)
+    if (!properties.size) transitioning.delete(e.target)
+    if (!transitioning.size && transitionFrame) {
+      cancelAnimationFrame(transitionFrame)
+      transitionFrame = null
+      refreshOverlays()
+    }
+  }
+
   const disconnect = () => {
+    stopHistoryRefresh?.()
+    if (refreshFrame) cancelAnimationFrame(refreshFrame)
+    if (transitionFrame) cancelAnimationFrame(transitionFrame)
+    transitioning.clear()
     unselect_all()
     unlisten()
   }

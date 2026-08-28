@@ -1,5 +1,6 @@
 import hotkeys from 'hotkeys-js'
 import { metaKey, getStyle, showHideSelected } from '../utilities/'
+import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
   .split(',')
@@ -10,7 +11,7 @@ const key_events = 'up,down,left,right'
 
 const command_events = `${metaKey}+up,${metaKey}+shift+up,${metaKey}+down,${metaKey}+shift+down,${metaKey}+left,${metaKey}+shift+left,${metaKey}+right,${metaKey}+shift+right`
 
-export function BoxShadow({selection}) {
+export function BoxShadow({selection}, history) {
   hotkeys(key_events, (e, handler) => {
     if (e.cancelBubble) return
 
@@ -19,22 +20,22 @@ export function BoxShadow({selection}) {
     let selectedNodes = selection()
       , keys = handler.key.split('+')
 
-    if (keys.includes('left') || keys.includes('right'))
-      keys.includes('alt')
-        ? changeBoxShadow(selectedNodes, keys, 'size')
-        : changeBoxShadow(selectedNodes, keys, 'x')
-    else
-      keys.includes('alt')
-        ? changeBoxShadow(selectedNodes, keys, 'blur')
-        : changeBoxShadow(selectedNodes, keys, 'y')
+    const prop = keys.includes('left') || keys.includes('right')
+      ? keys.includes('alt') ? 'size' : 'x'
+      : keys.includes('alt') ? 'blur' : 'y'
+    recordStyleChanges({history, elements: selectedNodes, properties: ['boxShadow'],
+      mergeKey: `shadow:${handler.key}:${prop}`,
+      update: () => changeBoxShadow(selectedNodes, keys, prop)})
   })
 
   hotkeys(command_events, (e, handler) => {
     e.preventDefault()
     let keys = handler.key.split('+')
-    keys.includes('left') || keys.includes('right')
-      ? changeBoxShadow(selection(), keys, 'opacity')
-      : changeBoxShadow(selection(), keys, 'inset')
+    const elements = selection()
+    const prop = keys.includes('left') || keys.includes('right') ? 'opacity' : 'inset'
+    recordStyleChanges({history, elements, properties: ['boxShadow'],
+      mergeKey: `shadow:${handler.key}:${prop}`,
+      update: () => changeBoxShadow(elements, keys, prop)})
   })
 
   return () => {

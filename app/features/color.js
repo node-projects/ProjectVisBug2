@@ -2,13 +2,14 @@ import $ from 'blingblingjs'
 import { TinyColor } from '@ctrl/tinycolor'
 import Color from 'colorjs.io'
 import { getStyle, contrast_color } from '../utilities/'
+import { recordStyleChanges } from './history'
 
 const state = {
   active_color: 'undefined',
   elements: [],
 }
 
-export function ColorPicker(pallete, selectorEngine) {
+export function ColorPicker(pallete, selectorEngine, history) {
   const foregroundPicker  = $('#foreground', pallete)
   const backgroundPicker  = $('#background', pallete)
   const borderPicker      = $('#border', pallete)
@@ -22,28 +23,39 @@ export function ColorPicker(pallete, selectorEngine) {
   }
 
   fgInput.on('input', ({target:{value}}) => {
-    state.elements.map(el =>
-      el.style['color'] = value)
+    recordStyleChanges({
+      history,
+      elements: state.elements,
+      properties: ['color'],
+      mergeKey: 'color:foreground',
+      update: () => state.elements.forEach(el => el.style.color = value),
+    })
 
     foregroundPicker[0].style.setProperty(`--contextual_color`, value)
   })
 
   bgInput.on('input', ({target:{value}}) => {
-    state.elements.map(el =>
-      el.style[el instanceof SVGElement
-        ? 'fill'
-        : 'backgroundColor'
-      ] = value)
+    recordStyleChanges({
+      history,
+      elements: state.elements,
+      properties: ['fill', 'backgroundColor'],
+      mergeKey: 'color:background',
+      update: () => state.elements.forEach(el =>
+        el.style[el instanceof SVGElement ? 'fill' : 'backgroundColor'] = value),
+    })
 
     backgroundPicker[0].style.setProperty(`--contextual_color`, value)
   })
 
   boInput.on('input', ({target:{value}}) => {
-    state.elements.map(el =>
-      el.style[el instanceof SVGElement
-        ? 'stroke'
-        : 'borderColor'
-      ] = value)
+    recordStyleChanges({
+      history,
+      elements: state.elements,
+      properties: ['stroke', 'borderColor'],
+      mergeKey: 'color:border',
+      update: () => state.elements.forEach(el =>
+        el.style[el instanceof SVGElement ? 'stroke' : 'borderColor'] = value),
+    })
 
     borderPicker[0].style.setProperty(`--contextual_color`, value)
   })

@@ -1,5 +1,6 @@
 import hotkeys from 'hotkeys-js'
 import { metaKey, getStyle, getSide, showHideSelected, expandBorders } from '../utilities/'
+import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
   .split(',')
@@ -10,17 +11,17 @@ const key_events = 'up,down,left,right'
 
 const command_events = `${metaKey}+up,${metaKey}+shift+up,${metaKey}+down,${metaKey}+shift+down`
 
-export function Padding(visbug) {
+export function Padding(visbug, history) {
   hotkeys(key_events, (e, handler) => {
     if (e.cancelBubble) return
 
     e.preventDefault()
-    padElement(visbug.selection(), handler.key)
+    padElement(visbug.selection(), handler.key, history)
   })
 
   hotkeys(command_events, (e, handler) => {
     e.preventDefault()
-    padAllElementSides(visbug.selection(), handler.key)
+    padAllElementSides(visbug.selection(), handler.key, history)
   })
 
   visbug.onSelectedUpdate(paintBackgrounds)
@@ -34,8 +35,7 @@ export function Padding(visbug) {
   }
 }
 
-export function padElement(els, direction) {
-  els
+const updatePadding = (els, direction) => els
     .map(el => showHideSelected(el))
     .map(el => ({
       el,
@@ -52,17 +52,33 @@ export function padElement(els, direction) {
       }))
     .forEach(({el, style, padding}) =>
       el.style[style] = `${padding < 0 ? 0 : padding}px`)
+
+export function padElement(els, direction, history) {
+  const style = 'padding' + getSide(direction)
+  recordStyleChanges({
+    history,
+    elements: els,
+    properties: [style],
+    mergeKey: `padding:${direction}`,
+    update: () => updatePadding(els, direction),
+  })
 }
 
-export function padAllElementSides(els, keycommand) {
+export function padAllElementSides(els, keycommand, history) {
   const combo = keycommand.split('+')
   let spoof = ''
 
   if (combo.includes('shift'))  spoof = 'shift+' + spoof
   if (combo.includes('down'))   spoof = 'alt+' + spoof
 
-  'up,down,left,right'.split(',')
-    .forEach(side => padElement(els, spoof + side))
+  const directions = 'up,down,left,right'.split(',').map(side => spoof + side)
+  recordStyleChanges({
+    history,
+    elements: els,
+    properties: directions.map(direction => 'padding' + getSide(direction)),
+    mergeKey: `padding:all:${keycommand}`,
+    update: () => directions.forEach(direction => updatePadding(els, direction)),
+  })
 }
 
 function paintBackgrounds(els) {

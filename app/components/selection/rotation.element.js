@@ -1,6 +1,7 @@
 import { RotationStyles } from '../styles.store'
 import { getBoxQuad, pointOutsideQuad, quadCenter } from './quad'
 import { normalizeAngleDelta } from './rotation'
+import { BatchChange, StyleChange } from '../../features/history'
 
 const HANDLE_DISTANCE = 30
 
@@ -71,6 +72,8 @@ export class Rotation extends HTMLElement {
     event.preventDefault()
     event.stopPropagation()
 
+    this.original_display = this.source_el.style.display
+    this.original_transform = this.source_el.style.transform
     if (getComputedStyle(this.source_el).display === 'inline')
       this.source_el.style.display = 'inline-block'
 
@@ -125,6 +128,13 @@ export class Rotation extends HTMLElement {
     this.line_svg.classList.remove('active')
     this.update_position()
     this.restore_transition()
+    const changes = [
+      new StyleChange({element: this.source_el, property: 'display',
+        oldValue: this.original_display, newValue: this.source_el.style.display}),
+      new StyleChange({element: this.source_el, property: 'transform',
+        oldValue: this.original_transform, newValue: this.source_el.style.transform}),
+    ].filter(change => change.oldValue !== change.newValue)
+    document.querySelector('vis-bug')?.history?.push(new BatchChange(changes))
   }
 
   restore_transition() {

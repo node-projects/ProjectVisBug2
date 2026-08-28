@@ -1,5 +1,6 @@
 import hotkeys from 'hotkeys-js'
 import { metaKey, getStyle, showHideSelected } from '../utilities/'
+import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
   .split(',')
@@ -10,7 +11,7 @@ const key_events = 'up,down,left,right'
 
 const command_events = `${metaKey}+up,${metaKey}+down`
 
-export function Font({selection}) {
+export function Font({selection}, history) {
   hotkeys(key_events, (e, handler) => {
     if (e.cancelBubble) return
 
@@ -19,36 +20,37 @@ export function Font({selection}) {
     let selectedNodes = selection()
       , keys = handler.key.split('+')
 
-    if (keys.includes('left') || keys.includes('right'))
-      keys.includes('shift')
-        ? changeKerning(selectedNodes, handler.key)
-        : changeAlignment(selectedNodes, handler.key)
-    else
-      keys.includes('shift')
-        ? changeLeading(selectedNodes, handler.key)
-        : changeFontSize(selectedNodes, handler.key)
+    const property = keys.includes('left') || keys.includes('right')
+      ? keys.includes('shift') ? 'letterSpacing' : 'textAlign'
+      : keys.includes('shift') ? 'lineHeight' : 'fontSize'
+    recordStyleChanges({history, elements: selectedNodes, properties: [property],
+      mergeKey: `font:${handler.key}`, update: () => {
+        if (property === 'letterSpacing') changeKerning(selectedNodes, handler.key)
+        else if (property === 'textAlign') changeAlignment(selectedNodes, handler.key)
+        else if (property === 'lineHeight') changeLeading(selectedNodes, handler.key)
+        else changeFontSize(selectedNodes, handler.key)
+      }})
   })
 
   hotkeys(command_events, (e, handler) => {
     e.preventDefault()
     let keys = handler.key.split('+')
-    changeFontWeight(selection(), keys.includes('up') ? 'up' : 'down')
+    const elements = selection()
+    recordStyleChanges({history, elements, properties: ['fontWeight'],
+      mergeKey: `font:weight:${handler.key}`,
+      update: () => changeFontWeight(elements, keys.includes('up') ? 'up' : 'down')})
   })
 
   hotkeys('cmd+b', e => {
-    selection().forEach(el =>
-      el.style.fontWeight =
-        el.style.fontWeight == 'bold'
-          ? null
-          : 'bold')
+    const elements = selection()
+    recordStyleChanges({history, elements, properties: ['fontWeight'], update: () =>
+      elements.forEach(el => el.style.fontWeight = el.style.fontWeight == 'bold' ? null : 'bold')})
   })
 
   hotkeys('cmd+i', e => {
-    selection().forEach(el =>
-      el.style.fontStyle =
-        el.style.fontStyle == 'italic'
-          ? null
-          : 'italic')
+    const elements = selection()
+    recordStyleChanges({history, elements, properties: ['fontStyle'], update: () =>
+      elements.forEach(el => el.style.fontStyle = el.style.fontStyle == 'italic' ? null : 'italic')})
   })
 
   return () => {

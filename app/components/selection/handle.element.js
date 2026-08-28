@@ -1,6 +1,7 @@
 import $ from 'blingblingjs'
 import { HandleStyles } from '../styles.store'
 import { screenDeltaToLocal } from './resize'
+import { BatchChange, StyleChange } from '../../features/history'
 
 export class Handle extends HTMLElement {
 
@@ -64,6 +65,11 @@ export class Handle extends HTMLElement {
     const initialTransform = new DOMMatrix(initialStyle.transform)
 
     const originalElTransition = sourceEl.style.transition
+    const originalSize = {
+      width: sourceEl.style.width,
+      height: sourceEl.style.height,
+      transform: sourceEl.style.transform,
+    }
     const originalDocumentCursor = document.body.style.cursor
     const originalDocumentUserSelect = document.body.style.userSelect
     sourceEl.style.transition = 'none'
@@ -149,9 +155,20 @@ export class Handle extends HTMLElement {
 
     function on_element_resize_end() {
       document.removeEventListener('pointermove', on_element_resize_move)
+      document.removeEventListener('pointerup', on_element_resize_end)
+      document.removeEventListener('mouseleave', on_element_resize_end)
       document.body.style.cursor = originalDocumentCursor
       document.body.style.userSelect = originalDocumentUserSelect
       sourceEl.style.transition = originalElTransition
+      const changes = ['width', 'height', 'transform']
+        .filter(property => originalSize[property] !== sourceEl.style[property])
+        .map(property => new StyleChange({
+          element: sourceEl,
+          property,
+          oldValue: originalSize[property],
+          newValue: sourceEl.style[property],
+        }))
+      document.querySelector('vis-bug')?.history?.push(new BatchChange(changes))
     }
   }
 

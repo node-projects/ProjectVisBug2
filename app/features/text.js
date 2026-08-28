@@ -1,8 +1,19 @@
 import $ from 'blingblingjs'
 import hotkeys from 'hotkeys-js'
 import { showHideNodeLabel } from '../utilities/'
+import { TextChange } from './history'
 
 const removeEditability = ({target}) => {
+  const oldText = target.__visbugOriginalText
+  if (oldText !== undefined && oldText !== target.innerHTML)
+    target.__visbugHistory?.push(new TextChange({
+      element: target,
+      oldText,
+      newText: target.innerHTML,
+    }))
+
+  delete target.__visbugOriginalText
+  delete target.__visbugHistory
   target.removeAttribute('contenteditable')
   target.removeAttribute('spellcheck')
   target.removeEventListener('blur', removeEditability)
@@ -17,7 +28,7 @@ const cleanup = (e, handler) => {
   window.getSelection().empty()
 }
 
-export function EditText(elements) {
+export function EditText(elements, history) {
   if (!elements.length) return
 
   elements.map(el => {
@@ -27,6 +38,9 @@ export function EditText(elements) {
       contenteditable: true,
       spellcheck: true,
     })
+    if (el.__visbugOriginalText === undefined)
+      el.__visbugOriginalText = el.innerHTML
+    el.__visbugHistory = history
     el.focus()
     showHideNodeLabel(el, true)
 
