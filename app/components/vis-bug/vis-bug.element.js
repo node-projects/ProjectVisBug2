@@ -35,6 +35,7 @@ export default class VisBug extends HTMLElement {
 
     this.toolbar_model  = VisBugModel
     this.$shadow        = this.attachShadow({mode: 'closed'})
+    this.promoteTooltip = this.promoteTooltip.bind(this)
     this.applyScheme    = schemeRule(
       this.$shadow,
       VisBugStyles, VisBugLightStyles, VisBugDarkStyles
@@ -92,6 +93,8 @@ export default class VisBug extends HTMLElement {
 
     const main_ol = this.$shadow.querySelector('ol:not([colors])')
     const buttonPieces = $('li[data-tool], li[data-tool] *', main_ol)
+
+    main_ol.addEventListener('pointerover', this.promoteTooltip)
 
     const clickEvent = (e) => {
       const target = e.currentTarget || e.target
@@ -156,6 +159,18 @@ export default class VisBug extends HTMLElement {
     document.querySelectorAll('[data-pseudo-select=true]')
       .forEach(el =>
         el.removeAttribute('data-pseudo-select'))
+  }
+
+  promoteTooltip({target, relatedTarget}) {
+    const toolButton = target.closest?.('li[data-tool]')
+
+    if (!toolButton || toolButton.contains(relatedTarget)) return
+    if (!this.showPopover || !this.matches(':popover-open')) return
+
+    // Selection UI is promoted into the browser's top layer as it changes.
+    // Re-promote the toolbar when a tool tip opens so its overflow paints last.
+    this.hidePopover()
+    this.showPopover()
   }
 
   toolSelected(el) {

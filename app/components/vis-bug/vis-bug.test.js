@@ -76,6 +76,30 @@ test('Should allow deselecting', async t => {
   t.pass()
 })
 
+test('Should promote sidebar tooltips above selection overlays', async t => {
+  const { page } = t.context
+
+  await page.click('[intro]')
+
+  const promotion = await page.evaluate(() => {
+    const visbug = document.querySelector('vis-bug')
+    const tool = visbug.$shadow.querySelector('li[data-tool="position"]')
+    let hidden = 0
+    let shown = 0
+
+    visbug.hidePopover = () => hidden++
+    visbug.showPopover = () => shown++
+    tool.dispatchEvent(new PointerEvent('pointerover', {
+      bubbles: true,
+      relatedTarget: visbug.$shadow.querySelector('ol'),
+    }))
+
+    return { hidden, shown }
+  })
+
+  t.deepEqual(promotion, { hidden: 1, shown: 1 })
+})
+
 test('Should be hideable', async t => {
   const { page } = t.context
   const metaKey = await pptrMetaKey(page)
