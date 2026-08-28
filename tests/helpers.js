@@ -8,8 +8,11 @@ export const setupPptrTab = async t => {
   t.context.page     = await t.context.browser.newPage()
 
   await t.context.page.goto('http://localhost:3000')
+  await t.context.page.waitForFunction(() => {
+    const visbug = document.querySelector('vis-bug')
+    return Boolean(visbug?.$shadow?.querySelector('li[data-tool]'))
+  })
   await t.context.page.evaluateHandle(`document.body.setAttribute('testing', true)`)
-  await t.context.page.waitForSelector('vis-bug')
 }
 
 export const teardownPptrTab = async ({context:{ page, browser }}) => {
