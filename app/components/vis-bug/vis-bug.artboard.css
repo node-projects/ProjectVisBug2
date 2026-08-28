@@ -1,0 +1,33 @@
+html[data-visbug-artboard] {
+  box-sizing: border-box;
+  display: block;
+  width: var(--visbug-artboard-canvas-width, 100vw);
+  height: var(--visbug-artboard-canvas-height, 100vh);
+  min-width: 100vw;
+  min-height: 100vh;
+  background-color: Canvas !important;
+  overflow: auto !important;
+  overflow-anchor: none;
+}
+
+html[data-visbug-artboard] > body {
+  box-sizing: border-box;
+  width: var(--visbug-artboard-width, 100vw);
+  max-width: var(--visbug-artboard-width, 100vw);
+  min-width: var(--visbug-artboard-width, 100vw);
+  min-height: var(--visbug-artboard-height, 100vh);
+  margin:
+    calc((var(--visbug-artboard-canvas-height, 100vh) - var(--visbug-artboard-height, 100vh)) / 2)
+    0
+    0
+    calc((var(--visbug-artboard-canvas-width, 100vw) - var(--visbug-artboard-width, 100vw)) / 2) !important;
+  outline: 1px solid ButtonFace;
+  box-shadow:
+    0 3px 2px hsl(0 0% 0% / 2%),
+    0 7px 5px hsl(0 0% 0% / 2%),
+    0 13px 10px hsl(0 0% 0% / 3%),
+    0 22px 18px hsl(0 0% 0% / 4%),
+    0 42px 33px hsl(0 0% 0% / 5%),
+    0 100px 80px hsl(0 0% 0% / 7%) !important;
+  overflow-anchor: none;
+}

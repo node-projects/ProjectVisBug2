@@ -1,6 +1,7 @@
 import {gimmeToggle} from "./contextmenu/launcher.js"
 import {getColorMode} from "./contextmenu/colormode.js"
 import {getColorScheme} from "./contextmenu/colorscheme.js"
+import {getViewMode} from "./contextmenu/viewmode.js"
 
 const state = {
   loaded:   {},
@@ -29,6 +30,7 @@ const toggleIn = ({id:tab_id}) => {
     })
     state.injected[tab_id] = true
     getColorMode()
+    getViewMode()
     getColorScheme()
   }
 
@@ -46,6 +48,7 @@ const toggleIn = ({id:tab_id}) => {
     state.loaded[tab_id]    = true
     state.injected[tab_id]  = true
     getColorMode()
+    getViewMode()
     getColorScheme()
   }
 

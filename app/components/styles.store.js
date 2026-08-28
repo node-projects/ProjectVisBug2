@@ -1,6 +1,7 @@
 import 'construct-style-sheets-polyfill'
 
 import { default as visbug_css }     from './vis-bug/vis-bug.element.css'
+import { default as visbug_artboard_css } from './vis-bug/vis-bug.artboard.css'
 import { default as handles_css }    from './selection/handles.element.css'
 import { default as handle_css }     from './selection/handle.element.css'
 import { default as hover_css }      from './selection/hover.element.css'
@@ -31,6 +32,7 @@ const constructStylesheet = (styles, stylesheet = new CSSStyleSheet()) => {
 }
 
 export const VisBugStyles         = constructStylesheet(visbug_css)
+export const ArtboardStyles       = constructStylesheet(visbug_artboard_css)
 export const HandlesStyles        = constructStylesheet(handles_css)
 export const HandleStyles         = constructStylesheet(handle_css)
 export const HoverStyles          = constructStylesheet(hover_css)

@@ -5,7 +5,7 @@ import { readability, isReadable } from '@ctrl/tinycolor'
 import {
   getStyle, isOffBounds,
   getA11ys, getWCAG2TextSize, getComputedBackgroundColor,
-  deepElementFromPoint, onRemove, contrast_color
+  deepElementFromPoint, onRemove, contrast_color, getOverlayRoot
 } from '../utilities/'
 
 const state = {
@@ -54,7 +54,7 @@ const mouseMove = e => {
 export function showTip(target, e) {
   if (!state.active.tip) { // create
     const tip = render(target)
-    document.body.appendChild(tip)
+    getOverlayRoot().appendChild(tip)
 
     positionTip(tip, e)
     observe({tip, target})

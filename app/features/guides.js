@@ -1,5 +1,5 @@
 import $ from 'blingblingjs'
-import { isOffBounds, deepElementFromPoint } from '../utilities/'
+import { isOffBounds, deepElementFromPoint, getOverlayRoot } from '../utilities/'
 import { clearMeasurements, takeMeasurementOwnership } from './measurements'
 
 const state = {
@@ -97,11 +97,11 @@ const showGridlines = node => {
     state.gridlines = document.createElement('visbug-gridlines')
     state.gridlines.position = node.getBoundingClientRect()
 
-    document.body.appendChild(state.gridlines)
+    getOverlayRoot().appendChild(state.gridlines)
   }
 }
 
-const hideGridlines = () => {
+export const hideGridlines = () => {
   if (!state.gridlines) return
   state.gridlines.style.display = 'none'
 }

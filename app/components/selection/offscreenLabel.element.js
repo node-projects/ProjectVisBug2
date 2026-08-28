@@ -1,5 +1,6 @@
 import $ from 'blingblingjs'
 import { OffscreenLabelStyles } from '../styles.store'
+import { getOverlayRoot } from '../../utilities/'
 
 window.addEventListener('scroll', positionFlags)
 
@@ -127,7 +128,7 @@ export function createOffscreenLabelIndicator(node_label_id, text, hoverText, le
     label.style.setProperty('--left', left)
   }
 
-  document.body.appendChild(label)
+  getOverlayRoot().appendChild(label)
 }
 
 export function removeOffscreenLabelIndicators() {

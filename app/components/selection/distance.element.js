@@ -26,7 +26,7 @@ export class Distance extends HTMLElement {
   set styleProps({y,x,d,q,v = false, color, local = false, length = d, angle = 0, centered = false}) {
     this.style.setProperty('--top', `${Math.round(y + (local ? 0 : window.scrollY))}px`)
     this.style.setProperty('--right', 'auto')
-    this.style.setProperty('--left', `${x}px`)
+    this.style.setProperty('--left', `${Math.round(x + (local ? 0 : window.scrollX))}px`)
     this.style.setProperty('--direction', v ? 'column' : 'row')
     this.style.setProperty('--quadrant', q)
     this.style.setProperty('--angle', `${angle}rad`)

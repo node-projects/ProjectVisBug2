@@ -1,6 +1,6 @@
 import $ from 'blingblingjs'
 import hotkeys from 'hotkeys-js'
-import { getNodeIndex, showEdge, swapElements, notList } from '../utilities/'
+import { getNodeIndex, showEdge, swapElements, notList, getOverlayRoot } from '../utilities/'
 import { toggleWatching } from './imageswap'
 
 const key_events = 'up,down,left,right'
@@ -224,7 +224,7 @@ const createDropzoneUI = el => {
   const zone = document.createElement('visbug-corners')
 
   zone.position = {el}
-  document.body.appendChild(zone)
+  getOverlayRoot().appendChild(zone)
 
   const observer = new MutationObserver(list =>
     zone.position = {el})
@@ -243,7 +243,7 @@ const createGripUI = el => {
   const grip = document.createElement('visbug-grip')
 
   grip.position = {el}
-  document.body.appendChild(grip)
+  getOverlayRoot().appendChild(grip)
 
   const observer = new MutationObserver(list =>
     grip.position = {el})
@@ -269,8 +269,8 @@ const createParentUI = parent => {
   label.position = {boundingRect: parent.getBoundingClientRect()}
   label.style.setProperty('--label-bg', 'var(--theme-purple)')
 
-  document.body.appendChild(hover)
-  document.body.appendChild(label)
+  getOverlayRoot().appendChild(hover)
+  getOverlayRoot().appendChild(label)
 
   const observer = new MutationObserver(list => {
     hover.position = {el:parent}
