@@ -41,6 +41,7 @@ export default {
   },
   plugins,
   watch: {
+    allowInputInsideOutputPath: true,
     exclude: ['node_modules/**'],
   }
 }
