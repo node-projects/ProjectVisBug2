@@ -137,7 +137,10 @@ test('selection action replaces the regular selection overlays', async t => {
     return {x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2}
   })
 
-  await page.mouse.click(action.x, action.y)
+  await page.mouse.move(action.x, action.y)
+  await page.mouse.down()
+  await new Promise(resolve => setTimeout(resolve, 75))
+  await page.mouse.up()
   await page.waitForSelector('visbug-projective-transform')
 
   t.is(await page.$$('visbug-projective-transform').then(items => items.length), 1)

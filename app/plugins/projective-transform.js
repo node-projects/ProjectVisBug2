@@ -17,7 +17,7 @@ const selectionOverlays = [
   'visbug-corners',
 ].join(',')
 
-export default function projectiveTransform({selected, source}) {
+export default function projectiveTransform({selected, source, activationEvent}) {
   const element = source || selected[0]
   if (!element) throw new Error('Select an element before using 3D transform')
 
@@ -26,6 +26,8 @@ export default function projectiveTransform({selected, source}) {
 
   const overlay = document.createElement('visbug-projective-transform')
   overlay.source = element
+  if (activationEvent?.type === 'pointerdown')
+    overlay.activation_pointer_id = activationEvent.pointerId
   overlay.suppress_overlays(Array.from(
     document.querySelectorAll(selectionOverlays)))
   document.body.appendChild(overlay)
