@@ -190,6 +190,9 @@ export default class VisBug extends HTMLElement {
 
     el.attr('data-active', true)
     this.active_tool = el
+    document.dispatchEvent(new CustomEvent('visbug-tool-change', {
+      detail: {tool: el.dataset.tool},
+    }))
     this[el.dataset.tool]()
   }
 

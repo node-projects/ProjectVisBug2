@@ -23,6 +23,12 @@ import {
   selectionActions as export_selection_actions,
   default as ExportPlugin
 } from './export'
+import {
+  commands as projective_transform_commands,
+  description as projective_transform_description,
+  selectionActions as projective_transform_selection_actions,
+  default as ProjectiveTransformPlugin
+} from './projective-transform'
 
 export const PluginRegistry = new Map()
 export const SelectionActionRegistry = new Map()
@@ -144,6 +150,13 @@ const builtInPlugins = [
   // ...commandsToHash(placeholdifier_commands, PlaceholdifierPlugin),
   {id: 'expand-text', commands: expand_text_commands, execute: ExpandTextPlugin},
   {
+    id: 'projective-transform',
+    commands: projective_transform_commands,
+    execute: ProjectiveTransformPlugin,
+    selectionActions: projective_transform_selection_actions,
+    active: true,
+  },
+  {
     id: 'export',
     commands: export_commands,
     execute: ExportPlugin,
@@ -174,6 +187,7 @@ export const PluginHints = [
   {command: loop_thru_widths_commands[0], description: loop_thru_widths_description},
   // {command: placeholdifier_commands[0], description: placeholdifier_description},
   {command: expand_text_commands[0], description: expand_text_description},
+  {command: projective_transform_commands[0], description: projective_transform_description},
   // ...colorblind_commands.map(cbc => {
   //   return {
   //     command: cbc, description: `simulate ${cbc}`

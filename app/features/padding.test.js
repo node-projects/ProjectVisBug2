@@ -81,4 +81,25 @@ test('Can change values by 10 with shift key', async t => {
   t.pass()
 })
 
+test('Keeps the box-model overlay visible and updates it in place', async t => {
+  const { page } = t.context
+
+  await page.click(test_selector)
+  await page.evaluate(() => {
+    const handles = document.querySelector('visbug-handles')
+    window.paddingBoxModel = handles.$shadow.querySelector('visbug-boxmodel')
+  })
+
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.press('ArrowUp')
+    const overlay = await page.$eval('visbug-handles', handles => ({
+      visible: handles.style.display !== 'none',
+      connected: window.paddingBoxModel.isConnected,
+      sameNode: handles.$shadow.querySelector('visbug-boxmodel') === window.paddingBoxModel,
+    }))
+
+    t.deepEqual(overlay, {visible: true, connected: true, sameNode: true})
+  }
+})
+
 test.afterEach.always(teardownPptrTab)

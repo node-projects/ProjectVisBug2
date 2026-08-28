@@ -14,6 +14,7 @@ export { BoxModel }   from './selection/box-model.element'
 export { Corners }    from './selection/corners.element'
 export { Grip }       from './selection/grip.element'
 export { Rotation }   from './selection/rotation.element'
+export { ProjectiveTransform } from './selection/projective-transform.element'
 export { SelectionActions } from './selection/actions.element'
 
 export { Metatip }    from './metatip/metatip.element'

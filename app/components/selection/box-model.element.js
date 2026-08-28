@@ -16,6 +16,12 @@ export class BoxModel extends HTMLElement {
   disconnectedCallback() {}
 
   set position(payload) {
+    if (!payload) {
+      this.drawable = {}
+      this.$shadow.innerHTML = ''
+      return
+    }
+
     this.$shadow.innerHTML = this.render(payload)
     this.createMeasurements({...payload, ...this.drawable.measurementQuads})
   }

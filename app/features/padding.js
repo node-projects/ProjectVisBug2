@@ -1,5 +1,5 @@
 import hotkeys from 'hotkeys-js'
-import { metaKey, getStyle, getSide, showHideSelected, expandBorders } from '../utilities/'
+import { metaKey, getStyle, getSide, expandBorders } from '../utilities/'
 import { recordStyleChanges } from './history'
 
 const key_events = 'up,down,left,right'
@@ -36,7 +36,6 @@ export function Padding(visbug, history) {
 }
 
 const updatePadding = (els, direction) => els
-    .map(el => showHideSelected(el))
     .map(el => ({
       el,
       style:    'padding' + getSide(direction),
@@ -104,37 +103,41 @@ function removeBackgrounds(els) {
   })
 }
 
-export function createPaddingVisual(el, hover = false) {
+export function createPaddingVisual(
+  el, hover = false, boxdisplay = document.createElement('visbug-boxmodel')
+) {
   const bounds            = el.getBoundingClientRect()
   const calculatedStyle   = getStyle(el, 'padding')
   const calculatedBorder   = expandBorders(getStyle(el, 'border-width'))
-  const boxdisplay        = document.createElement('visbug-boxmodel')
 
-  if (calculatedStyle !== '0px') {
-    const sides = {
-      top:    getStyle(el, 'paddingTop'),
-      right:  getStyle(el, 'paddingRight'),
-      bottom: getStyle(el, 'paddingBottom'),
-      left:   getStyle(el, 'paddingLeft'),
-    }
+  if (calculatedStyle === '0px') {
+    boxdisplay.position = null
+    return boxdisplay
+  }
 
-    Object.entries(sides).forEach(([side, val]) => {
-      if (typeof val !== 'number')
-        val = parseInt(getStyle(el, 'padding'+'-'+side).slice(0, -2))
+  const sides = {
+    top:    getStyle(el, 'paddingTop'),
+    right:  getStyle(el, 'paddingRight'),
+    bottom: getStyle(el, 'paddingBottom'),
+    left:   getStyle(el, 'paddingLeft'),
+  }
 
-      sides[side] = Math.round(val.toFixed(1) * 100) / 100
-    })
+  Object.entries(sides).forEach(([side, val]) => {
+    if (typeof val !== 'number')
+      val = parseInt(getStyle(el, 'padding'+'-'+side).slice(0, -2))
 
-    boxdisplay.position = {
-      mode: 'padding',
-      color: hover ? 'purple' : 'pink',
-      bounds,
-      sides: {
-        ...sides,
-        borders: calculatedBorder,
-      },
-      element: el
-    }
+    sides[side] = Math.round(val.toFixed(1) * 100) / 100
+  })
+
+  boxdisplay.position = {
+    mode: 'padding',
+    color: hover ? 'purple' : 'pink',
+    bounds,
+    sides: {
+      ...sides,
+      borders: calculatedBorder,
+    },
+    element: el
   }
 
   return boxdisplay

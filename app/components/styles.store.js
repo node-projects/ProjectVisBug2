@@ -15,6 +15,7 @@ import { default as metatip_css }    from './metatip/metatip.element.css'
 import { default as hotkeymap_css }  from './hotkey-map/base.element.css'
 import { default as grip_css }       from './selection/grip.element.css'
 import { default as rotation_css }   from './selection/rotation.element.css'
+import { default as projectiveTransform_css } from './selection/projective-transform.element.css'
 import { default as actions_css }    from './selection/actions.element.css'
 
 import { default as light_css }            from './_variables_light.css'
@@ -47,6 +48,7 @@ export const BoxModelStyles       = constructStylesheet(boxmodel_css)
 export const HotkeymapStyles      = constructStylesheet(hotkeymap_css)
 export const GripStyles           = constructStylesheet(grip_css)
 export const RotationStyles       = constructStylesheet(rotation_css)
+export const ProjectiveTransformStyles = constructStylesheet(projectiveTransform_css)
 export const ActionsStyles        = constructStylesheet(actions_css)
 
 export const LightTheme           = constructStylesheet(light_css)

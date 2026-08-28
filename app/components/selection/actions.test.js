@@ -19,7 +19,7 @@ test('Should show all export formats in the selection actions menu', async t => 
       group: shadow.querySelector('.group').firstChild.textContent,
       rootOpen: shadow.querySelector('.menu').matches(':popover-open'),
       submenuOpen: shadow.querySelector('.submenu-items').matches(':popover-open'),
-      formats: Array.from(shadow.querySelectorAll('[data-command]'))
+      formats: Array.from(shadow.querySelectorAll('.submenu-items [data-command]'))
         .map(button => button.textContent),
     }
   })
@@ -43,10 +43,12 @@ test('Should hide when no contributing plug-in is active', async t => {
   const hidden = await page.evaluate(() => {
     const visbug = document.querySelector('vis-bug')
     visbug.setPluginActive('export', false)
+    visbug.setPluginActive('projective-transform', false)
     const handles = document.querySelector('visbug-handles')
     const result = handles.$shadow
       .querySelector('visbug-selection-actions').hidden
     visbug.setPluginActive('export', true)
+    visbug.setPluginActive('projective-transform', true)
     return result
   })
 

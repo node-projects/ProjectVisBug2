@@ -172,7 +172,8 @@ export function Selectable(visbug, history) {
     document.onkeyup = function(e) {
       if (did_hide) {
         $('visbug-handles, visbug-label, visbug-hover, visbug-grip, visbug-rotation').forEach(el =>
-          el.style.display = null)
+          !el.hasAttribute('data-projective-suppressed')
+            && (el.style.display = null))
 
         did_hide = false
       }
