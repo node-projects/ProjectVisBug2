@@ -9,7 +9,7 @@ import {
 import {
   Selectable, Moveable, Padding, Margin, EditText, Font,
   Flex, Search, ColorPicker, BoxShadow, HueShift, MetaTip,
-  Guides, Screenshot, Position, Accessibility, draggable
+  Guides, Screenshot, Position, Accessibility, draggable, Zoom
 } from '../../features/'
 
 import {
@@ -42,7 +42,7 @@ export default class VisBug extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['color-scheme']
+    return ['color-scheme', 'viewmode']
   }
 
   connectedCallback() {
@@ -55,22 +55,32 @@ export default class VisBug extends HTMLElement {
 
     provideSelectorEngine(this.selectorEngine)
 
+    if (this.getAttribute('viewmode') === 'artboard')
+      Zoom.start(this.selectorEngine)
+
     this.toolSelected($('[data-tool="guides"]', this.$shadow)[0])
   }
 
   disconnectedCallback() {
     this.deactivate_feature()
+    this.active_tool = null
     this.cleanup()
     this.selectorEngine.disconnect()
     hotkeys.unbind(
       Object.keys(this.toolbar_model).reduce((events, key) =>
         events += ',' + key, ''))
     hotkeys.unbind(`${metaKey}+/`)
+    Zoom.stop()
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'color-scheme')
       this.applyScheme(newValue)
+
+    if (name === 'viewmode' && oldValue !== newValue && this.isConnected && this.selectorEngine)
+      newValue === 'artboard'
+        ? Zoom.start(this.selectorEngine)
+        : Zoom.stop()
   }
 
   setup() {
@@ -79,6 +89,10 @@ export default class VisBug extends HTMLElement {
     this.hasAttribute('color-mode')
       ? this.getAttribute('color-mode')
       : this.setAttribute('color-mode', 'hex')
+
+    this.hasAttribute('viewmode')
+      ? this.getAttribute('viewmode')
+      : this.setAttribute('viewmode', 'document')
 
     this.hasAttribute('color-scheme')
       ? this.getAttribute('color-scheme')
@@ -131,11 +145,12 @@ export default class VisBug extends HTMLElement {
   cleanup() {
     this.hidePopover && this.hidePopover()
 
-    Array.from(document.body.children)
-      .filter(node => node.nodeName.includes('VISBUG'))
+    Array.from(new Set([
+      ...document.body.children,
+      ...document.documentElement.children,
+    ]))
+      .filter(node => node !== this && node.nodeName.startsWith('VISBUG-'))
       .forEach(el => el.remove())
-
-    this.teardown()
 
     document.querySelectorAll('[data-pseudo-select=true]')
       .forEach(el =>

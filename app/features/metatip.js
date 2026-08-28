@@ -5,7 +5,7 @@ import { queryPage } from './search'
 import { getStyles, camelToDash, isOffBounds,
          deepElementFromPoint, getShadowValues,
          getTextShadowValues, firstUsableFontFromFamily,
-         onRemove
+         onRemove, getOverlayRoot
 } from '../utilities/'
 
 const state = {
@@ -57,7 +57,7 @@ const mouseMove = e => {
 export function showTip(target, e) {
   if (!state.active.tip) { // create
     const tip = render(target)
-    document.body.appendChild(tip)
+    getOverlayRoot().appendChild(tip)
 
     tip.hidePopover()
     tip.showPopover()

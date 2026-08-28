@@ -1,5 +1,5 @@
 import $ from 'blingblingjs'
-import { getStyle } from '../utilities/'
+import { getStyle, getOverlayRoot } from '../utilities/'
 
 let imgs      = []
   , overlays  = []
@@ -187,7 +187,7 @@ const showOverlay = (node, i) => {
   else {
     overlays[i] = document.createElement('visbug-overlay')
     overlays[i].position = rect
-    document.body.appendChild(overlays[i])
+    getOverlayRoot().appendChild(overlays[i])
   }
 }
 

@@ -1,4 +1,5 @@
 import $ from 'blingblingjs'
+import { getOverlayRoot } from '../utilities/'
 
 const state = {
   distances:  [],
@@ -140,7 +141,7 @@ export function createMeasurements({$anchor, $target}) {
         node_label_id:  state.distances.length,
       }
 
-      document.body.appendChild($measurement)
+      getOverlayRoot().appendChild($measurement)
       $measurement.isPopover()
       state.distances[state.distances.length] = $measurement
     })

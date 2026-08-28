@@ -16,7 +16,7 @@ import {
   metaKey, htmlStringToDom, createClassname, camelToDash,
   isOffBounds, getStyle, getStyles, deepElementFromPoint, getShadowValues,
   isSelectorValid, findNearestChildElement, findNearestParentElement,
-  getTextShadowValues, isFixed, onRemove
+  getTextShadowValues, isFixed, onRemove, getOverlayRoot
 } from '../utilities/'
 
 export function Selectable(visbug) {
@@ -611,7 +611,7 @@ export function Selectable(visbug) {
         isFixed: isFixed(el),
       }
 
-      document.body.appendChild(label)
+      getOverlayRoot().appendChild(label)
 
       $(label).on('query', ({detail}) => {
         if (!detail.text) return
@@ -649,7 +649,7 @@ export function Selectable(visbug) {
 
       handle.position = { el, node_label_id: id }
 
-      document.body.appendChild(handle)
+      getOverlayRoot().appendChild(handle)
 
       handles[handles.length] = handle
       return handle
@@ -662,7 +662,7 @@ export function Selectable(visbug) {
         hover_state.element.remove()
 
       hover_state.element = document.createElement('visbug-hover')
-      document.body.appendChild(hover_state.element)
+      getOverlayRoot().appendChild(hover_state.element)
       hover_state.element.position = {el}
 
       return hover_state.element
@@ -675,7 +675,7 @@ export function Selectable(visbug) {
         hover_state.label.remove()
 
       hover_state.label = document.createElement('visbug-label')
-      document.body.appendChild(hover_state.label)
+      getOverlayRoot().appendChild(hover_state.label)
 
       hover_state.label.text = text
       hover_state.label.position = {
@@ -696,7 +696,7 @@ export function Selectable(visbug) {
         hover_state.element.remove()
 
       hover_state.element = document.createElement('visbug-corners')
-      document.body.appendChild(hover_state.element)
+      getOverlayRoot().appendChild(hover_state.element)
       hover_state.element.position = {el}
 
       return hover_state.element
