@@ -28,6 +28,11 @@ export class ProjectiveTransform extends HTMLElement {
     this.on_pointer_up = this.on_pointer_up.bind(this)
     this.on_position_change = this.on_position_change.bind(this)
     this.on_document_click = this.on_document_click.bind(this)
+    this.on_history_change = this.on_history_change.bind(this)
+    this.on_tool_change = this.on_tool_change.bind(this)
+    this.on_transition_run = this.on_transition_run.bind(this)
+    this.on_transition_end = this.on_transition_end.bind(this)
+    this.refresh_transition = this.refresh_transition.bind(this)
   }
 
   connectedCallback() {
@@ -38,13 +43,16 @@ export class ProjectiveTransform extends HTMLElement {
     this.svg.addEventListener('pointerdown', this.on_pointer_down)
     window.addEventListener('resize', this.on_position_change)
     window.addEventListener('scroll', this.on_position_change, true)
-    document.addEventListener('click', this.on_document_click, true)
+    this.outside_click_timer = setTimeout(() => {
+      if (this.isConnected)
+        document.addEventListener('click', this.on_document_click, true)
+    })
+    document.addEventListener('visbug-tool-change', this.on_tool_change)
 
     this.source_observer = new MutationObserver(this.on_position_change)
-    if (this.source_el) this.source_observer.observe(this.source_el, {
-      attributes: true,
-      attributeFilter: ['class', 'style', 'data-selected'],
-    })
+    this.observe_source()
+    this.stop_history_refresh = document.querySelector('vis-bug')?.history
+      ?.subscribe(this.on_history_change)
 
     this.setAttribute('popover', 'manual')
     this.showPopover && this.showPopover()
@@ -56,27 +64,73 @@ export class ProjectiveTransform extends HTMLElement {
     this.svg?.removeEventListener('pointerdown', this.on_pointer_down)
     window.removeEventListener('resize', this.on_position_change)
     window.removeEventListener('scroll', this.on_position_change, true)
+    clearTimeout(this.outside_click_timer)
     document.removeEventListener('click', this.on_document_click, true)
+    document.removeEventListener('visbug-tool-change', this.on_tool_change)
     this.source_observer?.disconnect()
+    this.source_el?.removeEventListener('transitionrun', this.on_transition_run)
+    this.source_el?.removeEventListener('transitionend', this.on_transition_end)
+    this.source_el?.removeEventListener('transitioncancel', this.on_transition_end)
+    this.stop_history_refresh?.()
     this.position_frame && cancelAnimationFrame(this.position_frame)
+    this.history_frame && cancelAnimationFrame(this.history_frame)
+    this.transition_frame && cancelAnimationFrame(this.transition_frame)
+    this.restore_suppressed_overlays()
     this.stop_drag()
   }
 
   set source(element) {
     this.source_observer?.disconnect()
+    this.source_el?.removeEventListener('transitionrun', this.on_transition_run)
+    this.source_el?.removeEventListener('transitionend', this.on_transition_end)
+    this.source_el?.removeEventListener('transitioncancel', this.on_transition_end)
     this.source_el = element
 
     if (this.isConnected && element) {
-      this.source_observer.observe(element, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-selected'],
-      })
+      this.observe_source()
       this.update_position()
     }
   }
 
   get source() {
     return this.source_el
+  }
+
+  suppress_overlays(overlays) {
+    this.restore_suppressed_overlays()
+    this.suppressed_overlays = overlays.map(element => ({
+      element,
+      display: element.style.getPropertyValue('display'),
+      priority: element.style.getPropertyPriority('display'),
+    }))
+    this.suppressed_overlays.forEach(({element}) => {
+      element.setAttribute('data-projective-suppressed', '')
+      element.style.setProperty('display', 'none', 'important')
+    })
+  }
+
+  restore_suppressed_overlays() {
+    this.suppressed_overlays?.forEach(({element, display, priority}) => {
+      if (!element.isConnected) return
+
+      element.removeAttribute('data-projective-suppressed')
+      display
+        ? element.style.setProperty('display', display, priority)
+        : element.style.removeProperty('display')
+    })
+    this.suppressed_overlays = null
+  }
+
+  observe_source() {
+    if (!this.source_el) return
+
+    this.source_observer.observe(this.source_el, {
+      attributes: true,
+      attributeFilter: ['class', 'style', 'data-selected'],
+    })
+    this.source_el.addEventListener('transitionrun', this.on_transition_run)
+    this.source_el.addEventListener('transitionend', this.on_transition_end)
+    this.source_el.addEventListener('transitioncancel', this.on_transition_end)
   }
 
   on_position_change() {
@@ -94,6 +148,47 @@ export class ProjectiveTransform extends HTMLElement {
 
   on_document_click(event) {
     if (!event.composedPath().includes(this)) this.remove()
+  }
+
+  on_tool_change() {
+    this.remove()
+  }
+
+  on_history_change() {
+    if (!this.isConnected) return
+
+    this.update_position()
+    this.history_refreshes = 2
+    if (!this.history_frame)
+      this.history_frame = requestAnimationFrame(() => this.refresh_history())
+  }
+
+  refresh_history() {
+    this.history_frame = null
+    this.update_position()
+    if (this.history_refreshes-- > 0)
+      this.history_frame = requestAnimationFrame(() => this.refresh_history())
+  }
+
+  on_transition_run(event) {
+    if (event.target !== this.source_el || event.propertyName !== 'transform') return
+    if (!this.transition_frame)
+      this.transition_frame = requestAnimationFrame(this.refresh_transition)
+  }
+
+  on_transition_end(event) {
+    if (event.target !== this.source_el || event.propertyName !== 'transform') return
+    if (this.transition_frame) cancelAnimationFrame(this.transition_frame)
+    this.transition_frame = null
+    this.update_position()
+  }
+
+  refresh_transition() {
+    this.transition_frame = null
+    if (!this.isConnected || this.pointer_id !== undefined) return
+
+    this.update_position()
+    this.transition_frame = requestAnimationFrame(this.refresh_transition)
   }
 
   update_position() {

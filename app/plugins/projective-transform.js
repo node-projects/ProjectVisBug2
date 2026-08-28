@@ -23,11 +23,11 @@ export default function projectiveTransform({selected, source}) {
 
   document.querySelectorAll('visbug-projective-transform')
     .forEach(overlay => overlay.remove())
-  document.querySelectorAll(selectionOverlays)
-    .forEach(overlay => overlay.remove())
 
   const overlay = document.createElement('visbug-projective-transform')
   overlay.source = element
+  overlay.suppress_overlays(Array.from(
+    document.querySelectorAll(selectionOverlays)))
   document.body.appendChild(overlay)
   return overlay
 }

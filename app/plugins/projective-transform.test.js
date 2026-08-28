@@ -13,6 +13,25 @@ const shortcut = async (page, modifier, {shift = false} = {}) => {
   await page.keyboard.up(modifier)
 }
 
+const overlayMatchesSource = target => {
+  const source = document.querySelector(target)
+  const overlay = document.querySelector('visbug-projective-transform')
+  if (!source || !overlay) return false
+
+  const quad = source.getBoxQuads()[0]
+  const sourcePoints = [quad.p1, quad.p2, quad.p3, quad.p4]
+  const overlayPoints = Array.from(overlay.$shadow.querySelectorAll('[data-corner]'))
+    .filter(element => element.tagName === 'g')
+    .map(group => {
+      const matrix = group.transform.baseVal.consolidate().matrix
+      return {x: matrix.e, y: matrix.f}
+    })
+
+  return overlayPoints.every((point, index) =>
+    Math.abs(point.x - sourcePoints[index].x) < .1
+    && Math.abs(point.y - sourcePoints[index].y) < .1)
+}
+
 test.beforeEach(setupPptrTab)
 test.afterEach.always(teardownPptrTab)
 
@@ -26,9 +45,9 @@ test('shows four projective handles and supports undo and redo', async t => {
 
   const overlays = await page.evaluate(() => ({
     projective: document.querySelectorAll('visbug-projective-transform').length,
-    regular: document.querySelectorAll(
+    regular: Array.from(document.querySelectorAll(
       'visbug-handles, visbug-label, visbug-rotation, visbug-hover'
-    ).length,
+    )).filter(element => getComputedStyle(element).display !== 'none').length,
     handles: document.querySelector('visbug-projective-transform')
       .$shadow.querySelectorAll('.handle').length,
     crosses: document.querySelector('visbug-projective-transform')
@@ -58,6 +77,7 @@ test('shows four projective handles and supports undo and redo', async t => {
 
   await shortcut(page, modifier)
   t.is(await page.$eval(target, element => element.style.transform), '')
+  await page.waitForFunction(overlayMatchesSource, {}, target)
 
   await shortcut(page, modifier, {shift: true})
   t.is(await page.$eval(target, element => element.style.transform), transformed)
@@ -65,6 +85,41 @@ test('shows four projective handles and supports undo and redo', async t => {
   await page.click('article:nth-of-type(2)')
   t.is(await page.$$('visbug-projective-transform').then(items => items.length), 0)
   t.is(await page.$$('visbug-handles').then(items => items.length), 1)
+})
+
+test('tracks undo through a transform transition', async t => {
+  const {page} = t.context
+  await page.$eval(target, element => {
+    element.style.transition = 'transform 150ms linear'
+  })
+  await page.click(target)
+  await page.$eval(target, element =>
+    document.querySelector('vis-bug').execCommand('3d-transform', {source: element}))
+
+  const handle = await page.$eval('visbug-projective-transform', overlay => {
+    const rect = overlay.$shadow.querySelector('.handle').getBoundingClientRect()
+    return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2}
+  })
+  await page.mouse.move(handle.x, handle.y)
+  await page.mouse.down()
+  await page.mouse.move(handle.x + 30, handle.y + 20, {steps: 3})
+  await page.mouse.up()
+
+  await page.evaluate(() => document.querySelector('vis-bug').history.undo())
+  await page.waitForFunction(overlayMatchesSource, {}, target)
+
+  t.is(await page.$$('visbug-projective-transform').then(items => items.length), 1)
+})
+
+test('changing tools closes the projective overlay', async t => {
+  const {page} = t.context
+  await page.click(target)
+  await page.$eval(target, element =>
+    document.querySelector('vis-bug').execCommand('3d-transform', {source: element}))
+
+  await page.evaluate(() => document.querySelector('vis-bug').toolSelected('margin'))
+
+  t.is(await page.$$('visbug-projective-transform').then(items => items.length), 0)
 })
 
 test('selection action replaces the regular selection overlays', async t => {
@@ -86,7 +141,10 @@ test('selection action replaces the regular selection overlays', async t => {
   await page.waitForSelector('visbug-projective-transform')
 
   t.is(await page.$$('visbug-projective-transform').then(items => items.length), 1)
-  t.is(await page.$$('visbug-handles, visbug-rotation').then(items => items.length), 0)
+  const regularOverlaysHidden = await page.$$eval(
+    'visbug-handles, visbug-rotation',
+    elements => elements.every(element => getComputedStyle(element).display === 'none'))
+  t.true(regularOverlaysHidden)
 
   await page.click(target)
   t.is(await page.$$('visbug-projective-transform').then(items => items.length), 0)
