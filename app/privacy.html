@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Privacy Policy · VisBug2</title>
+    <meta name="description" content="Privacy policy for the VisBug2 browser extension">
+    <meta name="theme-color" content="#111316">
+    <link rel="canonical" href="https://node-projects.github.io/ProjectVisBug2/privacy.html">
+    <link rel="icon" href="favicon.ico">
+
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        font-synthesis: none;
+        --background: #111316;
+        --surface: #1a1d21;
+        --border: #343941;
+        --text: #f4f5f7;
+        --muted: #b7bdc7;
+        --accent: #ff69b4;
+        --accent-soft: rgb(255 105 180 / 12%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 18% 0%, rgb(255 105 180 / 10%), transparent 30rem),
+          var(--background);
+        color: var(--text);
+        line-height: 1.65;
+      }
+
+      a {
+        color: var(--accent);
+        text-underline-offset: 0.2em;
+      }
+
+      a:hover {
+        text-decoration-thickness: 0.15em;
+      }
+
+      header,
+      main,
+      footer {
+        width: min(100% - 2rem, 50rem);
+        margin-inline: auto;
+      }
+
+      header {
+        padding-block: clamp(3rem, 10vw, 6rem) 2rem;
+      }
+
+      .eyebrow {
+        margin: 0 0 0.5rem;
+        color: var(--accent);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 12ch;
+        margin: 0;
+        font-size: clamp(2.5rem, 8vw, 4.75rem);
+        font-weight: 720;
+        letter-spacing: -0.045em;
+        line-height: 0.98;
+      }
+
+      .summary {
+        max-width: 42rem;
+        margin: 1.5rem 0 0;
+        color: var(--muted);
+        font-size: clamp(1.05rem, 3vw, 1.25rem);
+      }
+
+      .updated {
+        margin-top: 1.25rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      main {
+        display: grid;
+        gap: 1rem;
+        padding-bottom: 3rem;
+      }
+
+      section {
+        padding: clamp(1.25rem, 4vw, 2rem);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        background: color-mix(in srgb, var(--surface) 92%, transparent);
+        box-shadow: 0 1rem 3rem rgb(0 0 0 / 12%);
+      }
+
+      h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.25rem;
+        letter-spacing: -0.015em;
+      }
+
+      p,
+      ul {
+        margin-block: 0.75rem 0;
+        color: var(--muted);
+      }
+
+      ul {
+        padding-left: 1.25rem;
+      }
+
+      li + li {
+        margin-top: 0.65rem;
+      }
+
+      strong {
+        color: var(--text);
+      }
+
+      .notice {
+        border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+        background: linear-gradient(135deg, var(--accent-soft), var(--surface) 55%);
+      }
+
+      footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-block: 0 3rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      footer p {
+        margin: 0;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        a {
+          transition: color 150ms ease;
+        }
+
+        a:hover {
+          color: #ff9dce;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">VisBug2</p>
+      <h1>Privacy Policy</h1>
+      <p class="summary">
+        VisBug2 is an open-source browser design tool. It operates locally in
+        the webpage you explicitly activate and does not send webpage content
+        or personal information to the VisBug2 maintainers.
+      </p>
+      <p class="updated">Last updated: August 29, 2026</p>
+    </header>
+
+    <main>
+      <section class="notice" aria-labelledby="plain-language-summary">
+        <h2 id="plain-language-summary">The short version</h2>
+        <ul>
+          <li>VisBug2 has no accounts, advertising, analytics, or telemetry.</li>
+          <li>Webpage inspection and editing happen locally in your browser.</li>
+          <li>Webpage content and browsing history are not sent to us.</li>
+          <li>Only two display preferences are saved through browser storage.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="data-handled">
+        <h2 id="data-handled">Data handled by the extension</h2>
+        <p>
+          When you launch VisBug2, the extension temporarily reads the active
+          webpage's document structure, text, styles, and layout information as
+          necessary to display its inspection and design tools. Changes you make
+          to the page are applied locally in that tab. This processing is the
+          core, user-visible purpose of VisBug2.
+        </p>
+        <p>
+          VisBug2 does not transmit webpage content, form data, URLs, browsing
+          history, authentication information, or other personal information to
+          the VisBug2 maintainers or to a VisBug2-operated server.
+        </p>
+      </section>
+
+      <section aria-labelledby="stored-preferences">
+        <h2 id="stored-preferences">Stored preferences</h2>
+        <p>
+          VisBug2 stores only the selected color-display format and interface
+          color scheme using the browser's extension storage API. These settings
+          may be synchronized between browsers or devices when browser sync is
+          enabled. That synchronization is provided by the browser vendor under
+          its own privacy terms; the VisBug2 maintainers do not receive or have
+          access to these preferences.
+        </p>
+      </section>
+
+      <section aria-labelledby="permissions">
+        <h2 id="permissions">Browser permissions</h2>
+        <ul>
+          <li>
+            <strong>activeTab:</strong> grants temporary access to the active
+            webpage only after you explicitly launch VisBug2.
+          </li>
+          <li>
+            <strong>scripting:</strong> injects the JavaScript and CSS files
+            packaged with VisBug2 into the activated tab so its tools can run.
+          </li>
+          <li>
+            <strong>contextMenus:</strong> provides commands for showing or
+            hiding VisBug2 and choosing its color and interface preferences.
+          </li>
+          <li>
+            <strong>storage:</strong> saves the two display preferences described
+            above.
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="collection-sharing">
+        <h2 id="collection-sharing">Collection, sharing, and sale</h2>
+        <p>
+          VisBug2 does not collect data on a developer-operated server. It does
+          not sell, rent, share, or use user data for advertising, credit,
+          profiling, or any purpose unrelated to its browser design tools. It
+          does not load or execute remotely hosted extension code.
+        </p>
+      </section>
+
+      <section aria-labelledby="retention-deletion">
+        <h2 id="retention-deletion">Retention and deletion</h2>
+        <p>
+          Changes made to a webpage are normally discarded when the page is
+          reloaded, closed, or navigated away from. Saved display preferences
+          remain in browser extension storage until you clear the extension's
+          data or uninstall it. Because the maintainers do not receive this data,
+          they hold no server-side copy to retain or delete.
+        </p>
+      </section>
+
+      <section aria-labelledby="limited-use">
+        <h2 id="limited-use">Limited Use</h2>
+        <p>
+          The use of information received from Google APIs will adhere to the
+          Chrome Web Store User Data Policy, including the Limited Use
+          requirements.
+        </p>
+      </section>
+
+      <section aria-labelledby="website-hosting">
+        <h2 id="website-hosting">Website hosting</h2>
+        <p>
+          This privacy-policy page and the VisBug2 demo are hosted by GitHub
+          Pages. Visiting these webpages may cause GitHub to process standard
+          connection information under the
+          <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a>.
+          The browser extension itself does not send data to this website.
+        </p>
+      </section>
+
+      <section aria-labelledby="changes-contact">
+        <h2 id="changes-contact">Changes and contact</h2>
+        <p>
+          This policy may be updated when VisBug2's functionality or data
+          practices change. The current version will remain available at this
+          URL with its effective date.
+        </p>
+        <p>
+          Questions or privacy concerns can be submitted through the
+          <a href="https://github.com/node-projects/ProjectVisBug2/issues">VisBug2 issue tracker</a>.
+          Please do not include confidential or sensitive personal information
+          in a public issue.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>VisBug2 · Open-source browser design tools</p>
+      <p><a href="./">Return to the VisBug2 demo</a></p>
+    </footer>
+  </body>
+</html>
