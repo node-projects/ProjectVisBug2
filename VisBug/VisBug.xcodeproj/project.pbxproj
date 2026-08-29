@@ -19,7 +19,6 @@
 		8EBF95AE2550B10C007B8136 /* contextmenu in Resources */ = {isa = PBXBuildFile; fileRef = 8EBF95A72550B10C007B8136 /* contextmenu */; };
 		8EBF95AF2550B10C007B8136 /* icons in Resources */ = {isa = PBXBuildFile; fileRef = 8EBF95A82550B10C007B8136 /* icons */; };
 		8EBF95B02550B10C007B8136 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 8EBF95A92550B10C007B8136 /* manifest.json */; };
-		8EBF95B12550B10C007B8136 /* build in Resources */ = {isa = PBXBuildFile; fileRef = 8EBF95AA2550B10C007B8136 /* build */; };
 		8EBF95B22550B10C007B8136 /* tuts in Resources */ = {isa = PBXBuildFile; fileRef = 8EBF95AB2550B10C007B8136 /* tuts */; };
 /* End PBXBuildFile section */
 
@@ -65,7 +64,6 @@
 		8EBF95A72550B10C007B8136 /* contextmenu */ = {isa = PBXFileReference; lastKnownFileType = folder; name = contextmenu; path = ../../extension/contextmenu; sourceTree = "<group>"; };
 		8EBF95A82550B10C007B8136 /* icons */ = {isa = PBXFileReference; lastKnownFileType = folder; name = icons; path = ../../extension/icons; sourceTree = "<group>"; };
 		8EBF95A92550B10C007B8136 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = manifest.json; path = ../../extension/manifest.json; sourceTree = "<group>"; };
-		8EBF95AA2550B10C007B8136 /* build */ = {isa = PBXFileReference; lastKnownFileType = folder; name = build; path = ../../extension/build; sourceTree = "<group>"; };
 		8EBF95AB2550B10C007B8136 /* tuts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tuts; path = ../../extension/tuts; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -149,7 +147,6 @@
 				8EBF95A72550B10C007B8136 /* contextmenu */,
 				8EBF95A82550B10C007B8136 /* icons */,
 				8EBF95A92550B10C007B8136 /* manifest.json */,
-				8EBF95AA2550B10C007B8136 /* build */,
 				8EBF95AB2550B10C007B8136 /* tuts */,
 			);
 			name = Resources;
@@ -249,7 +246,6 @@
 				8EBF95AF2550B10C007B8136 /* icons in Resources */,
 				8EBF95B22550B10C007B8136 /* tuts in Resources */,
 				8EBF95B02550B10C007B8136 /* manifest.json in Resources */,
-				8EBF95B12550B10C007B8136 /* build in Resources */,
 				8EBF95AD2550B10C007B8136 /* toolbar in Resources */,
 				8EBF95AC2550B10C007B8136 /* visbug.js in Resources */,
 			);

@@ -110,6 +110,34 @@ The original project's [wiki](https://github.com/GoogleChromeLabs/ProjectVisBug/
 and [keyboard command reference](https://github.com/GoogleChromeLabs/ProjectVisBug/wiki/Keyboard-Master-List)
 remain useful background documentation.
 
+#### Release packages
+
+Publishing a GitHub release with a numeric tag such as `v2.1.0` starts the
+browser-extension release workflow. The tag version is applied to `package.json`,
+`package-lock.json`, and each generated `manifest.json` before the build, and the
+following files are attached to the GitHub release automatically:
+
+- `visbug2-chrome-v2.1.0.zip`
+- `visbug2-edge-v2.1.0.zip`
+- `visbug2-firefox-v2.1.0.zip`
+- `visbug2-safari-v2.1.0.zip`
+
+Chrome, Edge, and Firefox packages have the archive layout expected by their
+respective store upload forms. The Safari ZIP contains an unsigned macOS
+container app for testing;
+public App Store distribution still requires Apple signing and submission
+through App Store Connect.
+
+To build the Chrome, Edge, and Firefox ZIPs locally, run:
+
+```sh
+npm run extension:package
+```
+
+The files are written to `artifacts/release/`. The workflow contains a disabled,
+commented block that can later be enabled to commit the release version back to
+`package.json`, `package-lock.json`, and `extension/manifest.json`.
+
 ## Contributing
 
 Issues and pull requests are welcome in the

@@ -10,4 +10,5 @@ extension/toolbar/bundle.css
 extension/toolbar/chunks/
 extension/build
 extension/tuts
+artifacts/
 VisBug/VisBug.xcodeproj/project.xcworkspace/xcuserdata/argyle.xcuserdatad/UserInterfaceState.xcuserstate
