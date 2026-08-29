@@ -1,0 +1,125 @@
+name: Build browser-extension release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  web-extensions:
+    name: Chrome, Edge, and Firefox
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Apply release version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="$(node scripts/release-version.mjs "$RELEASE_TAG")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version --ignore-scripts
+          npm run extension:ci:version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Package WebExtensions
+        run: npm run extension:package
+
+      - name: Attach WebExtension ZIPs to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" artifacts/release/*.zip --clobber
+
+      # Uncomment both steps below if release versions should also be committed
+      # back to package.json, package-lock.json, and extension/manifest.json on
+      # the repository's default branch.
+      # - name: Check out the default branch
+      #   uses: actions/checkout@v7
+      #   with:
+      #     ref: ${{ github.event.repository.default_branch }}
+      #
+      # - name: Commit release version to the default branch
+      #   env:
+      #     VERSION: ${{ steps.version.outputs.version }}
+      #   run: |
+      #     npm version "$VERSION" --no-git-tag-version --allow-same-version --ignore-scripts
+      #     npm run extension:ci:version
+      #     git config user.name "github-actions[bot]"
+      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      #     git add package.json package-lock.json extension/manifest.json
+      #     git diff --cached --quiet || git commit -m "chore: set version to $VERSION"
+      #     git push origin "HEAD:${{ github.event.repository.default_branch }}"
+
+  safari-extension:
+    name: Safari
+    runs-on: macos-latest
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Apply release version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="$(node scripts/release-version.mjs "$RELEASE_TAG")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version --ignore-scripts
+          npm run extension:ci:version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension assets
+        run: |
+          npm run extension:build
+          node scripts/package-extensions.mjs --prepare-only
+          cp artifacts/extensions/safari/manifest.json extension/manifest.json
+
+      - name: Build unsigned Safari container app
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          xcodebuild \
+            -project VisBug/VisBug.xcodeproj \
+            -scheme VisBug \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath artifacts/safari-build \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+          ditto -c -k --sequesterRsrc --keepParent \
+            artifacts/safari-build/Build/Products/Release/VisBug.app \
+            "artifacts/release/visbug2-safari-v$VERSION.zip"
+
+      - name: Attach Safari ZIP to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" artifacts/release/*.zip --clobber
