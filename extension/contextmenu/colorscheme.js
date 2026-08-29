@@ -15,16 +15,24 @@ var platform = typeof browser === 'undefined'
   ? chrome
   : browser
 
-const sendColorScheme = () => {
-  platform.tabs.query({active: true, currentWindow: true}, ([tab]) => {
-    tab && platform.tabs.sendMessage(tab.id, {
+const sendColorScheme = tab_id => {
+  if (tab_id === undefined) return
+
+  try {
+    const pending_message = platform.tabs.sendMessage(tab_id, {
       action: 'COLOR_SCHEME',
       params: {mode:colorschemestate.mode},
     })
-  })
+
+    // The tab can navigate or close before the message is delivered.
+    pending_message?.catch?.(() => undefined)
+  }
+  catch {
+    // Callback-based browser implementations throw instead of returning a promise.
+  }
 }
 
-export const getColorScheme = () => {
+export const getColorScheme = tab_id => {
   platform.storage.sync.get([schemestoragekey], value => {
     let found_value = value[schemestoragekey];
 
@@ -43,7 +51,7 @@ export const getColorScheme = () => {
 
     // send visbug user preference
     colorschemestate.mode = found_value
-    sendColorScheme()
+    sendColorScheme(tab_id)
 
     return found_value
   })
@@ -75,5 +83,5 @@ platform.contextMenus.onClicked.addListener(({parentMenuItemId, menuItemId}, tab
   platform.storage.sync.set({[schemestoragekey]: menuItemId})
   colorschemestate.mode = menuItemId
 
-  sendColorScheme()
+  sendColorScheme(tab?.id)
 })
